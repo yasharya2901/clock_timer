@@ -1,0 +1,432 @@
+import { useState, useEffect, useRef } from 'react';
+
+type Theme = 'green' | 'yellow' | 'blue' | 'purple' | 'red';
+
+const themes = {
+  green: { primary: '#22c55e', dark: '#16a34a', name: 'Green' },
+  yellow: { primary: '#ffd700', dark: '#ccaa00', name: 'Yellow' },
+  blue: { primary: '#3b82f6', dark: '#2563eb', name: 'Blue' },
+  purple: { primary: '#a855f7', dark: '#9333ea', name: 'Purple' },
+  red: { primary: '#ef4444', dark: '#dc2626', name: 'Red' },
+};
+
+export default function Timer() {
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(25);
+  const [seconds, setSeconds] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editHours, setEditHours] = useState('');
+  const [editMinutes, setEditMinutes] = useState('');
+  const [editSeconds, setEditSeconds] = useState('');
+  const [focusedField, setFocusedField] = useState<'hours' | 'minutes' | 'seconds'>('minutes');
+  const [theme, setTheme] = useState<Theme>('green');
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const intervalRef = useRef<number | null>(null);
+  const initialHours = useRef(0);
+  const initialMinutes = useRef(25);
+  const initialSeconds = useRef(0);
+
+  // Update document title dynamically
+  useEffect(() => {
+    const parts = [];
+    if (hours > 0) parts.push(String(hours).padStart(2, '0'));
+    parts.push(String(minutes).padStart(2, '0'));
+    parts.push(String(seconds).padStart(2, '0'));
+    const formattedTime = parts.join(':');
+    if (isRunning) {
+      document.title = `${formattedTime} - ClockTimer.in`;
+    } else {
+      document.title = 'Online Timer - Free Countdown Timer | ClockTimer.in';
+    }
+  }, [hours, minutes, seconds, isRunning]);
+
+  // Timer logic
+  useEffect(() => {
+    if (isRunning) {
+      intervalRef.current = window.setInterval(() => {
+        setSeconds(prev => {
+          if (prev === 0) {
+            setMinutes(prevMin => {
+              if (prevMin === 0) {
+                setHours(prevHours => {
+                  if (prevHours === 0) {
+                    // Timer complete
+                    playAlarm();
+                    if (isRepeat) {
+                      // Reset to initial time and keep running
+                      setHours(initialHours.current);
+                      setMinutes(initialMinutes.current);
+                      setSeconds(initialSeconds.current);
+                      return initialHours.current;
+                    } else {
+                      // Stop at 0:0:0
+                      setIsRunning(false);
+                      return 0;
+                    }
+                  }
+                  return prevHours - 1;
+                });
+                // If we just completed (prevMin was 0), return appropriate value
+                if (hours === 0) {
+                  return isRepeat ? initialMinutes.current : 0;
+                }
+                return 59;
+              }
+              return prevMin - 1;
+            });
+            // If we just completed (prev was 0, prevMin was 0), return appropriate value
+            if (minutes === 0 && hours === 0) {
+              return isRepeat ? initialSeconds.current : 0;
+            }
+            return 59;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isRunning, isRepeat, hours, minutes, seconds]);
+
+  const playAlarm = () => {
+    // Simple beep using Web Audio API
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+    gainNode.gain.value = 0.3;
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  };
+
+  const handleStart = () => {
+    if (!isRunning) {
+      // If timer is at 0:0:0, reset to initial values
+      if (hours === 0 && minutes === 0 && seconds === 0) {
+        setHours(initialHours.current);
+        setMinutes(initialMinutes.current);
+        setSeconds(initialSeconds.current);
+      } else if (hours > 0 || minutes > 0 || seconds > 0) {
+        // Save current values as initial if not already set
+        initialHours.current = hours;
+        initialMinutes.current = minutes;
+        initialSeconds.current = seconds;
+      }
+    }
+    setIsRunning(!isRunning);
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setHours(initialHours.current);
+    setMinutes(initialMinutes.current);
+    setSeconds(initialSeconds.current);
+  };
+
+  const handleTimeClick = () => {
+    if (!isRunning) {
+      setIsEditing(true);
+      setEditHours(hours > 0 ? String(hours) : '');
+      setEditMinutes(String(minutes));
+      setEditSeconds(String(seconds));
+    }
+  };
+
+  const handleEditSubmit = () => {
+    const newHours = parseInt(editHours) || 0;
+    const newMinutes = parseInt(editMinutes) || 0;
+    const newSeconds = parseInt(editSeconds) || 0;
+    
+    setHours(Math.min(Math.max(newHours, 0), 99));
+    setMinutes(Math.min(Math.max(newMinutes, 0), 59));
+    setSeconds(Math.min(Math.max(newSeconds, 0), 59));
+    setIsEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleIncrement = () => {
+    if (focusedField === 'hours') {
+      const current = parseInt(editHours) || 0;
+      setEditHours(String(Math.min(current + 1, 99)));
+    } else if (focusedField === 'minutes') {
+      const current = parseInt(editMinutes) || 0;
+      setEditMinutes(String(Math.min(current + 1, 59)));
+    } else if (focusedField === 'seconds') {
+      const current = parseInt(editSeconds) || 0;
+      setEditSeconds(String(Math.min(current + 1, 59)));
+    }
+  };
+
+  const handleDecrement = () => {
+    if (focusedField === 'hours') {
+      const current = parseInt(editHours) || 0;
+      setEditHours(String(Math.max(current - 1, 0)));
+    } else if (focusedField === 'minutes') {
+      const current = parseInt(editMinutes) || 0;
+      setEditMinutes(String(Math.max(current - 1, 0)));
+    } else if (focusedField === 'seconds') {
+      const current = parseInt(editSeconds) || 0;
+      setEditSeconds(String(Math.max(current - 1, 0)));
+    }
+  };
+
+  const currentTheme = themes[theme];
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  return (
+    <div className="w-screen h-screen flex flex-col bg-bg-black text-cream overflow-hidden">
+      {/* Top Navigation */}
+      <nav className="flex flex-col md:flex-row justify-between items-center px-4 md:px-8 py-4 md:py-6 relative z-10 gap-4 md:gap-0">
+        <div className="flex items-center gap-4 md:gap-6">
+          <div className="relative">
+            <button 
+              onClick={() => setShowThemeMenu(!showThemeMenu)}
+              className="flex items-center gap-2 bg-transparent border-none font-mono text-sm md:text-base cursor-pointer transition-colors duration-200 hover:opacity-80"
+              style={{ color: currentTheme.primary }}
+            >
+              <span className="text-lg md:text-xl">🎨</span> Theme: {currentTheme.name}
+            </button>
+            {showThemeMenu && (
+              <div className="absolute top-full left-0 mt-2 bg-gray-900 rounded-lg shadow-lg p-2 z-50 min-w-[150px]">
+                {(Object.keys(themes) as Theme[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => {
+                      setTheme(t);
+                      setShowThemeMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition-colors duration-200 font-mono text-sm"
+                    style={{ color: themes[t].primary }}
+                  >
+                    {themes[t].name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-4 md:gap-6">
+          <label className="flex items-center gap-2 md:gap-3 cursor-pointer text-sm md:text-base text-cream">
+            <span>Repeat</span>
+            <input
+              type="checkbox"
+              checked={isRepeat}
+              onChange={(e) => setIsRepeat(e.target.checked)}
+              className="hidden"
+            />
+            <span className={`relative w-[50px] h-[26px] rounded-[26px] transition-colors duration-300`} style={{ backgroundColor: isRepeat ? currentTheme.primary : '#1f2937' }}>
+              <span className={`absolute w-5 h-5 rounded-full bg-cream top-[3px] left-[3px] transition-transform duration-300 ${isRepeat ? 'translate-x-6' : ''}`}></span>
+            </span>
+          </label>
+          
+          <button 
+            onClick={toggleFullscreen}
+            className="flex items-center gap-2 bg-transparent border-none text-cream font-mono text-sm md:text-base cursor-pointer transition-colors duration-200"
+            style={{ transition: 'color 0.2s' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = currentTheme.primary}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#f5f1e3'}
+          >
+            <span className="text-lg md:text-xl">⛶</span> Fullscreen
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Timer Container */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 md:gap-16 px-4 md:px-8 py-8">
+        {/* Controls */}
+        <div className="flex flex-row gap-4 md:gap-6 items-center order-2 md:order-1">
+          <button 
+            onClick={handleStart}
+            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 relative"
+            style={{ 
+              backgroundColor: currentTheme.primary,
+              boxShadow: `0 4px 0 ${currentTheme.dark}`
+            }}
+          >
+            {isRunning ? 'Pause' : 'Start'}
+          </button>
+          <button 
+            onClick={handleReset}
+            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 relative"
+            style={{ 
+              backgroundColor: currentTheme.primary,
+              boxShadow: `0 4px 0 ${currentTheme.dark}`
+            }}
+          >
+            Reset
+          </button>
+        </div>
+
+        {/* Timer Display */}
+        {!isEditing ? (
+          <div 
+            className="flex items-center gap-4 md:gap-8 select-none cursor-pointer order-1 md:order-2"
+            onClick={handleTimeClick}
+            title={!isRunning ? "Click to edit time" : ""}
+          >
+            {hours > 0 && (
+              <>
+                <div className="flex flex-col items-center">
+                  <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+                    {String(hours).padStart(2, '0')}
+                  </div>
+                  <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
+                    Hours
+                  </div>
+                </div>
+                <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream mb-8 md:mb-12">
+                  :
+                </div>
+              </>
+            )}
+            <div className="flex flex-col items-center">
+              <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+                {String(minutes).padStart(2, '0')}
+              </div>
+              <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
+                Minutes
+              </div>
+            </div>
+            
+            <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream mb-8 md:mb-12">
+              :
+            </div>
+            
+            <div className="flex flex-col items-center">
+              <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+                {String(seconds).padStart(2, '0')}
+              </div>
+              <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
+                Seconds
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-6 order-1 md:order-2">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-center">
+                <input
+                  type="number"
+                  value={editHours}
+                  onChange={(e) => setEditHours(e.target.value)}
+                  onFocus={() => setFocusedField('hours')}
+                  placeholder="HH"
+                  min="0"
+                  max="99"
+                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ borderColor: focusedField === 'hours' ? currentTheme.primary : '#374151' }}
+                />
+                <div className="font-mono text-xs md:text-sm text-cream mt-1">Hours</div>
+              </div>
+              <div className="text-cream text-3xl md:text-5xl font-bold">:</div>
+              <div className="flex flex-col items-center">
+                <input
+                  type="number"
+                  value={editMinutes}
+                  onChange={(e) => setEditMinutes(e.target.value)}
+                  onFocus={() => setFocusedField('minutes')}
+                  placeholder="MM"
+                  min="0"
+                  max="59"
+                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ borderColor: focusedField === 'minutes' ? currentTheme.primary : '#374151' }}
+                />
+                <div className="font-mono text-xs md:text-sm text-cream mt-1">Minutes</div>
+              </div>
+              <div className="text-cream text-3xl md:text-5xl font-bold">:</div>
+              <div className="flex flex-col items-center">
+                <input
+                  type="number"
+                  value={editSeconds}
+                  onChange={(e) => setEditSeconds(e.target.value)}
+                  onFocus={() => setFocusedField('seconds')}
+                  placeholder="SS"
+                  min="0"
+                  max="59"
+                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  style={{ borderColor: focusedField === 'seconds' ? currentTheme.primary : '#374151' }}
+                />
+                <div className="font-mono text-xs md:text-sm text-cream mt-1">Seconds</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleDecrement}
+                className="w-[60px] h-[60px] rounded-full border-none text-[2.5rem] font-bold text-bg-black cursor-pointer flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 leading-none"
+                style={{ 
+                  backgroundColor: currentTheme.primary,
+                  boxShadow: `0 4px 0 ${currentTheme.dark}`
+                }}
+              >
+                −
+              </button>
+              <button
+                onClick={handleIncrement}
+                className="w-[60px] h-[60px] rounded-full border-none text-[2.5rem] font-bold text-bg-black cursor-pointer flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 leading-none"
+                style={{ 
+                  backgroundColor: currentTheme.primary,
+                  boxShadow: `0 4px 0 ${currentTheme.dark}`
+                }}
+              >
+                +
+              </button>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleEditSubmit}
+                className="px-6 py-2 rounded-lg font-mono font-bold text-bg-black"
+                style={{ backgroundColor: currentTheme.primary }}
+              >
+                Save
+              </button>
+              <button
+                onClick={handleEditCancel}
+                className="px-6 py-2 rounded-lg font-mono font-bold bg-gray-700 text-cream hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

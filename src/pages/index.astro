@@ -1,0 +1,99 @@
+---
+import Timer from '../components/Timer';
+import '../styles/global.css';
+
+const siteUrl = 'https://clocktimer.in';
+const title = 'Online Timer - Free Countdown Timer | ClockTimer.in';
+const description = 'Free online timer and countdown clock. Perfect for productivity, cooking, workouts, and time management. Simple, accurate, and works in your browser.';
+const keywords = 'online timer, countdown timer, stopwatch, clock timer, free timer, productivity timer, cooking timer, workout timer, pomodoro timer';
+---
+
+<!DOCTYPE html>
+<html lang="en" class="w-full h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Primary Meta Tags -->
+  <title>{title}</title>
+  <meta name="title" content={title}>
+  <meta name="description" content={description}>
+  <meta name="keywords" content={keywords}>
+  <meta name="author" content="ClockTimer.in">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href={siteUrl}>
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content={siteUrl}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:image" content={`${siteUrl}/og-image.jpg`}>
+  <meta property="og:site_name" content="ClockTimer.in">
+  
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content={siteUrl}>
+  <meta name="twitter:title" content={title}>
+  <meta name="twitter:description" content={description}>
+  <meta name="twitter:image" content={`${siteUrl}/og-image.jpg`}>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0a0a0a">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "ClockTimer.in",
+      "url": "${siteUrl}",
+      "description": "${description}",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Online countdown timer",
+        "Customizable time intervals",
+        "Repeat functionality",
+        "Fullscreen mode",
+        "Browser-based, no installation required"
+      ]
+    }
+  </script>
+  
+  <!-- Preload Critical Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+</head>
+<body class="w-full h-full overflow-hidden font-mono bg-bg-black text-cream antialiased">
+  <!-- Hydrate Timer component only when idle -->
+  <Timer client:idle />
+  
+  <!-- SEO Content (Hidden but crawlable) -->
+  <noscript>
+    <div style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif;">
+      <h1>Online Timer - ClockTimer.in</h1>
+      <p>{description}</p>
+      <p>This timer requires JavaScript to function. Please enable JavaScript in your browser.</p>
+      <h2>Features:</h2>
+      <ul>
+        <li>Customizable countdown timer</li>
+        <li>Repeat functionality for recurring timers</li>
+        <li>Fullscreen mode for distraction-free timing</li>
+        <li>Simple and intuitive interface</li>
+      </ul>
+    </div>
+  </noscript>
+</body>
+</html>

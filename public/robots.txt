@@ -1,0 +1,20 @@
+# ClockTimer.in - Robots.txt
+# Allow all search engines to crawl the entire site
+
+User-agent: *
+Allow: /
+
+# Block common bot paths (optional)
+Disallow: /api/
+Disallow: /_astro/
+
+# Sitemap location
+Sitemap: https://clocktimer.in/sitemap-index.xml
+Sitemap: https://clocktimer.in/sitemap-0.xml
+
+# Crawl-delay for aggressive bots (optional)
+User-agent: Googlebot
+Crawl-delay: 0
+
+User-agent: Bingbot
+Crawl-delay: 0
