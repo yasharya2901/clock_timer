@@ -33,13 +33,8 @@ export default defineConfig({
       // Generate sourcemaps for debugging
       sourcemap: false,
       
-      // Minification
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true, // Remove console.logs in production
-        },
-      },
+      // Minification (using default esbuild)
+      minify: 'esbuild',
     },
     
     // CSS preprocessing
