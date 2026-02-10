@@ -26,6 +26,7 @@ export default function Timer() {
   const [isPipSupported, setIsPipSupported] = useState(false);
   const [isPipActive, setIsPipActive] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [timerOnlyMode, setTimerOnlyMode] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const pipWindowRef = useRef<Window | null>(null);
   const initialHours = useRef(0);
@@ -62,6 +63,17 @@ export default function Timer() {
   useEffect(() => {
     localStorage.setItem('timer-theme', theme);
   }, [theme]);
+
+  // Handle ESC key to exit timer-only mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && timerOnlyMode) {
+        setTimerOnlyMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [timerOnlyMode]);
 
   // Update document title dynamically
   useEffect(() => {
@@ -325,7 +337,44 @@ export default function Timer() {
 
   return (
     <div className="w-screen h-screen flex flex-col bg-bg-black text-cream overflow-hidden">
-      {/* Top Navigation */}
+      {timerOnlyMode ? (
+        // Timer-only mode: Just the timer, click anywhere to exit
+        <div 
+          className="w-full h-full flex items-center justify-center cursor-pointer"
+          onClick={() => setTimerOnlyMode(false)}
+          title="Click anywhere or press ESC to exit focus mode"
+        >
+          <div className="flex items-center gap-8 md:gap-16 select-none">
+            {hours > 0 && (
+              <>
+                <div className="flex flex-col items-center">
+                  <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+                    {String(hours).padStart(2, '0')}
+                  </div>
+                </div>
+                <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream">
+                  :
+                </div>
+              </>
+            )}
+            <div className="flex flex-col items-center">
+              <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+                {String(minutes).padStart(2, '0')}
+              </div>
+            </div>
+            <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream">
+              :
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+                {String(seconds).padStart(2, '0')}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        // Normal mode with navigation and controls
+        <>
       <nav className="flex flex-col md:flex-row justify-between items-center px-4 md:px-8 py-4 md:py-6 relative z-10 gap-4 md:gap-0">
         <div className="flex items-center gap-4 md:gap-6">
           <div className="relative">
@@ -383,6 +432,16 @@ export default function Timer() {
           )}
           
           <button 
+            onClick={() => setTimerOnlyMode(true)}
+            className="flex items-center gap-2 bg-transparent border-none text-cream font-mono text-sm md:text-base cursor-pointer transition-colors duration-200"
+            style={{ transition: 'color 0.2s' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = displayTheme.primary}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#f5f1e3'}
+          >
+            <span className="text-base md:text-lg">◯</span> Focus
+          </button>
+          
+          <button 
             onClick={toggleFullscreen}
             className="flex items-center gap-2 bg-transparent border-none text-cream font-mono text-sm md:text-base cursor-pointer transition-colors duration-200"
             style={{ transition: 'color 0.2s' }}
@@ -396,46 +455,10 @@ export default function Timer() {
 
       {/* Main Timer Container */}
       <div className="flex-1 flex flex-col items-center justify-center gap-8 md:gap-16 px-4 md:px-8 py-8">
-        {/* Controls */}
-        <div className="flex flex-row gap-4 md:gap-6 items-center order-2 md:order-1">
-          <button 
-            onClick={handleStart}
-            disabled={isEditing}
-            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
-            style={{ 
-              backgroundColor: isEditing ? '#6b7280' : displayTheme.primary,
-              boxShadow: isEditing ? '0 4px 0 #4b5563' : `0 4px 0 ${displayTheme.dark}`,
-              cursor: isEditing ? 'not-allowed' : 'pointer',
-              opacity: isEditing ? 0.5 : 1,
-              transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
-            }}
-            onMouseEnter={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(-2px)')}
-            onMouseLeave={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(0)')}
-          >
-            {isRunning ? 'Pause' : 'Start'}
-          </button>
-          <button 
-            onClick={handleReset}
-            disabled={isEditing}
-            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
-            style={{ 
-              backgroundColor: isEditing ? '#6b7280' : displayTheme.primary,
-              boxShadow: isEditing ? '0 4px 0 #4b5563' : `0 4px 0 ${displayTheme.dark}`,
-              cursor: isEditing ? 'not-allowed' : 'pointer',
-              opacity: isEditing ? 0.5 : 1,
-              transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
-            }}
-            onMouseEnter={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(-2px)')}
-            onMouseLeave={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(0)')}
-          >
-            Reset
-          </button>
-        </div>
-
         {/* Timer Display */}
         {!isEditing ? (
           <div 
-            className="flex items-center gap-4 md:gap-8 select-none cursor-pointer order-1 md:order-2"
+            className="flex items-center gap-4 md:gap-8 select-none cursor-pointer"
             onClick={handleTimeClick}
             title={!isRunning ? "Click to edit time" : ""}
           >
@@ -565,7 +588,43 @@ export default function Timer() {
             </div>
           </div>
         )}
+
+        {/* Controls - below timer */}
+        {!isEditing && (
+          <div className="flex flex-row gap-4 md:gap-6 items-center">
+            <button 
+              onClick={handleStart}
+              className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
+              style={{ 
+                backgroundColor: displayTheme.primary,
+                boxShadow: `0 4px 0 ${displayTheme.dark}`,
+                cursor: 'pointer',
+                transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+            >
+              {isRunning ? 'Pause' : 'Start'}
+            </button>
+            <button 
+              onClick={handleReset}
+              className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
+              style={{ 
+                backgroundColor: displayTheme.primary,
+                boxShadow: `0 4px 0 ${displayTheme.dark}`,
+                cursor: 'pointer',
+                transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
+              onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+            >
+              Reset
+            </button>
+          </div>
+        )}
       </div>
+        </>
+      )}
     </div>
   );
 }
