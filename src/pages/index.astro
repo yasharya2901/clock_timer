@@ -1,6 +1,7 @@
 ---
 import Timer from '../components/Timer';
 import '../styles/global.css';
+import Analytics from '@vercel/analytics/astro'
 
 const siteUrl = 'https://clocktimer.in';
 const title = 'Online Timer - Free Countdown Timer | ClockTimer.in';
@@ -77,6 +78,7 @@ const keywords = 'online timer, countdown timer, stopwatch, clock timer, free ti
 
 </head>
 <body class="w-full h-full overflow-hidden font-mono bg-bg-black text-cream antialiased">
+  <Analytics/>
   <!-- Hydrate Timer component only when idle -->
   <Timer client:idle />
   
