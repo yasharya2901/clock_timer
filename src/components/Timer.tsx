@@ -16,7 +16,6 @@ export default function Timer() {
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editHours, setEditHours] = useState('');
   const [editMinutes, setEditMinutes] = useState('');
@@ -32,6 +31,15 @@ export default function Timer() {
   const initialHours = useRef(0);
   const initialMinutes = useRef(25);
   const initialSeconds = useRef(0);
+
+  // Helper function to format time string
+  const formatTime = (h: number, m: number, s: number) => {
+    const parts = [];
+    if (h > 0) parts.push(String(h).padStart(2, '0'));
+    parts.push(String(m).padStart(2, '0'));
+    parts.push(String(s).padStart(2, '0'));
+    return parts.join(':');
+  };
 
   // Check PiP support on mount
   useEffect(() => {
@@ -57,11 +65,7 @@ export default function Timer() {
 
   // Update document title dynamically
   useEffect(() => {
-    const parts = [];
-    if (hours > 0) parts.push(String(hours).padStart(2, '0'));
-    parts.push(String(minutes).padStart(2, '0'));
-    parts.push(String(seconds).padStart(2, '0'));
-    const formattedTime = parts.join(':');
+    const formattedTime = formatTime(hours, minutes, seconds);
     if (isRunning) {
       document.title = `${formattedTime} - ClockTimer.in`;
     } else {
@@ -75,11 +79,7 @@ export default function Timer() {
       const pipDoc = pipWindowRef.current.document;
       const timeElement = pipDoc.getElementById('pip-time');
       if (timeElement) {
-        const parts = [];
-        if (hours > 0) parts.push(String(hours).padStart(2, '0'));
-        parts.push(String(minutes).padStart(2, '0'));
-        parts.push(String(seconds).padStart(2, '0'));
-        timeElement.textContent = parts.join(':');
+        timeElement.textContent = formatTime(hours, minutes, seconds);
       }
     }
   }, [hours, minutes, seconds, isPipActive]);
@@ -241,10 +241,8 @@ export default function Timer() {
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen();
-      setIsFullscreen(false);
     }
   };
 
@@ -290,11 +288,7 @@ export default function Timer() {
         });
 
         // Create minimal timer display
-        const parts = [];
-        if (hours > 0) parts.push(String(hours).padStart(2, '0'));
-        parts.push(String(minutes).padStart(2, '0'));
-        parts.push(String(seconds).padStart(2, '0'));
-        const timeString = parts.join(':');
+        const timeString = formatTime(hours, minutes, seconds);
 
         pipWindow.document.body.innerHTML = `
           <div style="
@@ -328,14 +322,6 @@ export default function Timer() {
       console.error('PiP error:', error);
     }
   };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
 
   return (
     <div className="w-screen h-screen flex flex-col bg-bg-black text-cream overflow-hidden">
