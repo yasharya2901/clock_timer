@@ -24,10 +24,36 @@ export default function Timer() {
   const [focusedField, setFocusedField] = useState<'hours' | 'minutes' | 'seconds'>('minutes');
   const [theme, setTheme] = useState<Theme>('green');
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+  const [isPipSupported, setIsPipSupported] = useState(false);
+  const [isPipActive, setIsPipActive] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const intervalRef = useRef<number | null>(null);
+  const pipWindowRef = useRef<Window | null>(null);
   const initialHours = useRef(0);
   const initialMinutes = useRef(25);
   const initialSeconds = useRef(0);
+
+  // Check PiP support on mount
+  useEffect(() => {
+    setIsPipSupported('documentPictureInPicture' in window);
+  }, []);
+
+  // Load theme from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('timer-theme');
+    if (savedTheme && savedTheme in themes) {
+      setTheme(savedTheme as Theme);
+    }
+    // Trigger transition from white to theme color after a brief delay
+    setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 100);
+  }, []);
+
+  // Save theme to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('timer-theme', theme);
+  }, [theme]);
 
   // Update document title dynamically
   useEffect(() => {
@@ -42,6 +68,21 @@ export default function Timer() {
       document.title = 'Online Timer - Free Countdown Timer | ClockTimer.in';
     }
   }, [hours, minutes, seconds, isRunning]);
+
+  // Update PiP window when time changes
+  useEffect(() => {
+    if (isPipActive && pipWindowRef.current) {
+      const pipDoc = pipWindowRef.current.document;
+      const timeElement = pipDoc.getElementById('pip-time');
+      if (timeElement) {
+        const parts = [];
+        if (hours > 0) parts.push(String(hours).padStart(2, '0'));
+        parts.push(String(minutes).padStart(2, '0'));
+        parts.push(String(seconds).padStart(2, '0'));
+        timeElement.textContent = parts.join(':');
+      }
+    }
+  }, [hours, minutes, seconds, isPipActive]);
 
   // Timer logic
   useEffect(() => {
@@ -191,6 +232,11 @@ export default function Timer() {
   };
 
   const currentTheme = themes[theme];
+  const displayTheme = {
+    primary: isInitialLoad ? '#f5f1e3' : currentTheme.primary,
+    dark: isInitialLoad ? '#d4cfc0' : currentTheme.dark,
+    name: currentTheme.name
+  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -199,6 +245,87 @@ export default function Timer() {
     } else {
       document.exitFullscreen();
       setIsFullscreen(false);
+    }
+  };
+
+  const togglePip = async () => {
+    if (!isPipSupported) return;
+
+    try {
+      if (isPipActive && pipWindowRef.current) {
+        // Close PiP
+        pipWindowRef.current.close();
+        pipWindowRef.current = null;
+        setIsPipActive(false);
+      } else {
+        // Open PiP
+        const pipWindow = await (window as any).documentPictureInPicture.requestWindow({
+          width: 400,
+          height: 150,
+        });
+
+        pipWindowRef.current = pipWindow;
+        setIsPipActive(true);
+
+        // Set minimal title
+        pipWindow.document.title = '';
+
+        // Copy styles to PiP window
+        const styleSheets = Array.from(document.styleSheets);
+        styleSheets.forEach((styleSheet) => {
+          try {
+            const cssRules = Array.from(styleSheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join('');
+            const style = pipWindow.document.createElement('style');
+            style.textContent = cssRules;
+            pipWindow.document.head.appendChild(style);
+          } catch (e) {
+            // Cross-origin stylesheets will throw, add link instead
+            const link = pipWindow.document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = (styleSheet as any).href;
+            pipWindow.document.head.appendChild(link);
+          }
+        });
+
+        // Create minimal timer display
+        const parts = [];
+        if (hours > 0) parts.push(String(hours).padStart(2, '0'));
+        parts.push(String(minutes).padStart(2, '0'));
+        parts.push(String(seconds).padStart(2, '0'));
+        const timeString = parts.join(':');
+
+        pipWindow.document.body.innerHTML = `
+          <div style="
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0a;
+            margin: 0;
+            padding: 0;
+            font-family: 'JetBrains Mono', monospace;
+          ">
+            <div id="pip-time" style="
+              font-size: 4rem;
+              font-weight: bold;
+              color: #f5f1e3;
+              text-shadow: 0 0 40px rgba(245, 241, 227, 0.3);
+              letter-spacing: 0.1em;
+            ">${timeString}</div>
+          </div>
+        `;
+
+        // Handle PiP window close
+        pipWindow.addEventListener('pagehide', () => {
+          pipWindowRef.current = null;
+          setIsPipActive(false);
+        });
+      }
+    } catch (error) {
+      console.error('PiP error:', error);
     }
   };
 
@@ -219,9 +346,9 @@ export default function Timer() {
             <button 
               onClick={() => setShowThemeMenu(!showThemeMenu)}
               className="flex items-center gap-2 bg-transparent border-none font-mono text-sm md:text-base cursor-pointer transition-colors duration-200 hover:opacity-80"
-              style={{ color: currentTheme.primary }}
+              style={{ color: displayTheme.primary, transition: 'color 1s ease-in-out' }}
             >
-              <span className="text-lg md:text-xl">🎨</span> Theme: {currentTheme.name}
+              <span className="text-base md:text-lg">◉</span> Theme: {displayTheme.name}
             </button>
             {showThemeMenu && (
               <div className="absolute top-full left-0 mt-2 bg-gray-900 rounded-lg shadow-lg p-2 z-50 min-w-[150px]">
@@ -252,16 +379,28 @@ export default function Timer() {
               onChange={(e) => setIsRepeat(e.target.checked)}
               className="hidden"
             />
-            <span className={`relative w-[50px] h-[26px] rounded-[26px] transition-colors duration-300`} style={{ backgroundColor: isRepeat ? currentTheme.primary : '#1f2937' }}>
+            <span className={`relative w-[50px] h-[26px] rounded-[26px] transition-colors duration-300`} style={{ backgroundColor: isRepeat ? displayTheme.primary : '#1f2937', transition: 'background-color 1s ease-in-out' }}>
               <span className={`absolute w-5 h-5 rounded-full bg-cream top-[3px] left-[3px] transition-transform duration-300 ${isRepeat ? 'translate-x-6' : ''}`}></span>
             </span>
           </label>
+          
+          {isPipSupported && (
+            <button 
+              onClick={togglePip}
+              className="flex items-center gap-2 bg-transparent border-none text-cream font-mono text-sm md:text-base cursor-pointer transition-colors duration-200"
+              style={{ transition: 'color 0.2s' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = displayTheme.primary}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#f5f1e3'}
+            >
+              <span className="text-base md:text-lg">▢</span> {isPipActive ? 'Close PiP' : 'Picture in Picture'}
+            </button>
+          )}
           
           <button 
             onClick={toggleFullscreen}
             className="flex items-center gap-2 bg-transparent border-none text-cream font-mono text-sm md:text-base cursor-pointer transition-colors duration-200"
             style={{ transition: 'color 0.2s' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = currentTheme.primary}
+            onMouseEnter={(e) => e.currentTarget.style.color = displayTheme.primary}
             onMouseLeave={(e) => e.currentTarget.style.color = '#f5f1e3'}
           >
             <span className="text-lg md:text-xl">⛶</span> Fullscreen
@@ -275,21 +414,33 @@ export default function Timer() {
         <div className="flex flex-row gap-4 md:gap-6 items-center order-2 md:order-1">
           <button 
             onClick={handleStart}
-            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 relative"
+            disabled={isEditing}
+            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
             style={{ 
-              backgroundColor: currentTheme.primary,
-              boxShadow: `0 4px 0 ${currentTheme.dark}`
+              backgroundColor: isEditing ? '#6b7280' : displayTheme.primary,
+              boxShadow: isEditing ? '0 4px 0 #4b5563' : `0 4px 0 ${displayTheme.dark}`,
+              cursor: isEditing ? 'not-allowed' : 'pointer',
+              opacity: isEditing ? 0.5 : 1,
+              transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
             }}
+            onMouseEnter={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(-2px)')}
+            onMouseLeave={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(0)')}
           >
             {isRunning ? 'Pause' : 'Start'}
           </button>
           <button 
             onClick={handleReset}
-            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 relative"
+            disabled={isEditing}
+            className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
             style={{ 
-              backgroundColor: currentTheme.primary,
-              boxShadow: `0 4px 0 ${currentTheme.dark}`
+              backgroundColor: isEditing ? '#6b7280' : displayTheme.primary,
+              boxShadow: isEditing ? '0 4px 0 #4b5563' : `0 4px 0 ${displayTheme.dark}`,
+              cursor: isEditing ? 'not-allowed' : 'pointer',
+              opacity: isEditing ? 0.5 : 1,
+              transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
             }}
+            onMouseEnter={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(-2px)')}
+            onMouseLeave={(e) => !isEditing && (e.currentTarget.style.transform = 'translateY(0)')}
           >
             Reset
           </button>
@@ -352,7 +503,7 @@ export default function Timer() {
                   min="0"
                   max="99"
                   className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  style={{ borderColor: focusedField === 'hours' ? currentTheme.primary : '#374151' }}
+                  style={{ borderColor: focusedField === 'hours' ? displayTheme.primary : '#374151', transition: 'border-color 1s ease-in-out' }}
                 />
                 <div className="font-mono text-xs md:text-sm text-cream mt-1">Hours</div>
               </div>
@@ -367,7 +518,7 @@ export default function Timer() {
                   min="0"
                   max="59"
                   className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  style={{ borderColor: focusedField === 'minutes' ? currentTheme.primary : '#374151' }}
+                  style={{ borderColor: focusedField === 'minutes' ? displayTheme.primary : '#374151', transition: 'border-color 1s ease-in-out' }}
                 />
                 <div className="font-mono text-xs md:text-sm text-cream mt-1">Minutes</div>
               </div>
@@ -382,7 +533,7 @@ export default function Timer() {
                   min="0"
                   max="59"
                   className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  style={{ borderColor: focusedField === 'seconds' ? currentTheme.primary : '#374151' }}
+                  style={{ borderColor: focusedField === 'seconds' ? displayTheme.primary : '#374151', transition: 'border-color 1s ease-in-out' }}
                 />
                 <div className="font-mono text-xs md:text-sm text-cream mt-1">Seconds</div>
               </div>
@@ -392,8 +543,9 @@ export default function Timer() {
                 onClick={handleDecrement}
                 className="w-[60px] h-[60px] rounded-full border-none text-[2.5rem] font-bold text-bg-black cursor-pointer flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 leading-none"
                 style={{ 
-                  backgroundColor: currentTheme.primary,
-                  boxShadow: `0 4px 0 ${currentTheme.dark}`
+                  backgroundColor: displayTheme.primary,
+                  boxShadow: `0 4px 0 ${displayTheme.dark}`,
+                  transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
                 }}
               >
                 −
@@ -402,8 +554,9 @@ export default function Timer() {
                 onClick={handleIncrement}
                 className="w-[60px] h-[60px] rounded-full border-none text-[2.5rem] font-bold text-bg-black cursor-pointer flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5 leading-none"
                 style={{ 
-                  backgroundColor: currentTheme.primary,
-                  boxShadow: `0 4px 0 ${currentTheme.dark}`
+                  backgroundColor: displayTheme.primary,
+                  boxShadow: `0 4px 0 ${displayTheme.dark}`,
+                  transition: 'background-color 1s ease-in-out, box-shadow 1s ease-in-out'
                 }}
               >
                 +
@@ -413,7 +566,7 @@ export default function Timer() {
               <button
                 onClick={handleEditSubmit}
                 className="px-6 py-2 rounded-lg font-mono font-bold text-bg-black"
-                style={{ backgroundColor: currentTheme.primary }}
+                style={{ backgroundColor: displayTheme.primary, transition: 'background-color 1s ease-in-out' }}
               >
                 Save
               </button>
