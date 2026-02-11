@@ -340,33 +340,33 @@ export default function Timer() {
       {timerOnlyMode ? (
         // Timer-only mode: Just the timer, click anywhere to exit
         <div 
-          className="w-full h-full flex items-center justify-center cursor-pointer"
+          className="w-full h-full flex items-center justify-center cursor-pointer px-8 md:px-16 lg:px-24"
           onClick={() => setTimerOnlyMode(false)}
           title="Click anywhere or press ESC to exit focus mode"
         >
-          <div className="flex items-center gap-8 md:gap-16 select-none">
+          <div className="flex items-center gap-4 md:gap-8 lg:gap-12 select-none">
             {hours > 0 && (
               <>
                 <div className="flex flex-col items-center">
-                  <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+                  <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                     {String(hours).padStart(2, '0')}
                   </div>
                 </div>
-                <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream">
+                <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream">
                   :
                 </div>
               </>
             )}
             <div className="flex flex-col items-center">
-              <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+              <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                 {String(minutes).padStart(2, '0')}
               </div>
             </div>
-            <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream">
+            <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream">
               :
             </div>
             <div className="flex flex-col items-center">
-              <div className="font-jet text-[8rem] sm:text-[10rem] md:text-[15rem] lg:text-[20rem] xl:text-[25rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+              <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                 {String(seconds).padStart(2, '0')}
               </div>
             </div>
