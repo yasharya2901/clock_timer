@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { updateFavicon } from '../utils/faviconUpdater';
 import { formatTime, clampTime } from '../utils/timeUtils';
 import { playAlarm } from '../utils/audioUtils';
-import { getStorageItem, setStorageItem, isValidStorageValue } from '../utils/storageUtils';
+import { getStorageItem, setStorageItem, isValidStorageValue, getSessionJson, setSessionJson } from '../utils/storageUtils';
 import { updateDocumentTitle } from '../utils/documentUtils';
 import { isPipSupported as checkPipSupport, openPipWindow, updatePipTime, updatePipContent } from '../utils/pipUtils';
 
@@ -43,6 +43,46 @@ export default function Timer() {
   useEffect(() => {
     setIsPipSupported(checkPipSupport());
   }, []);
+
+  // Load timer state from sessionStorage on mount
+  useEffect(() => {
+    const savedState = getSessionJson<{
+      hours: number;
+      minutes: number;
+      seconds: number;
+      isRunning: boolean;
+      isRepeat: boolean;
+      initialHours: number;
+      initialMinutes: number;
+      initialSeconds: number;
+    } | null>('timer-state', null);
+
+    if (savedState) {
+      setHours(savedState.hours);
+      setMinutes(savedState.minutes);
+      setSeconds(savedState.seconds);
+      setIsRunning(savedState.isRunning);
+      setIsRepeat(savedState.isRepeat);
+      initialHours.current = savedState.initialHours;
+      initialMinutes.current = savedState.initialMinutes;
+      initialSeconds.current = savedState.initialSeconds;
+    }
+  }, []);
+
+  // Save timer state to sessionStorage whenever it changes
+  useEffect(() => {
+    const timerState = {
+      hours,
+      minutes,
+      seconds,
+      isRunning,
+      isRepeat,
+      initialHours: initialHours.current,
+      initialMinutes: initialMinutes.current,
+      initialSeconds: initialSeconds.current,
+    };
+    setSessionJson('timer-state', timerState);
+  }, [hours, minutes, seconds, isRunning, isRepeat]);
 
   // Load theme from localStorage on mount
   useEffect(() => {
