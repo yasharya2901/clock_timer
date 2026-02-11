@@ -277,33 +277,33 @@ export default function Timer() {
       {timerOnlyMode ? (
         // Timer-only mode: Just the timer, click anywhere to exit
         <div 
-          className="w-full h-full flex items-center justify-center cursor-pointer px-8 md:px-16 lg:px-24"
+          className="w-full h-full flex items-center justify-center cursor-pointer px-4"
           onClick={() => setTimerOnlyMode(false)}
           title="Click anywhere or press ESC to exit focus mode"
         >
-          <div className="flex items-center gap-4 md:gap-8 lg:gap-12 select-none">
+          <div className="flex items-center select-none" style={{ gap: hours > 0 ? 'clamp(0.5rem, 2vw, 3rem)' : 'clamp(1rem, 3vw, 4rem)' }}>
             {hours > 0 && (
               <>
                 <div className="flex flex-col items-center">
-                  <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+                  <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: 'clamp(5rem, 15vw, 24rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                     {String(hours).padStart(2, '0')}
                   </div>
                 </div>
-                <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream">
+                <div className="font-jet font-bold leading-[0.9] text-cream" style={{ fontSize: 'clamp(5rem, 15vw, 24rem)' }}>
                   :
                 </div>
               </>
             )}
             <div className="flex flex-col items-center">
-              <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 15vw, 24rem)' : 'clamp(6rem, 18vw, 30rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                 {String(minutes).padStart(2, '0')}
               </div>
             </div>
-            <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream">
+            <div className="font-jet font-bold leading-[0.9] text-cream" style={{ fontSize: hours > 0 ? 'clamp(5rem, 15vw, 24rem)' : 'clamp(6rem, 18vw, 30rem)' }}>
               :
             </div>
             <div className="flex flex-col items-center">
-              <div className="font-jet text-[6rem] sm:text-[8rem] md:text-[10rem] lg:text-[14rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 15vw, 24rem)' : 'clamp(6rem, 18vw, 30rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                 {String(seconds).padStart(2, '0')}
               </div>
             </div>
@@ -395,27 +395,28 @@ export default function Timer() {
         {/* Timer Display */}
         {!isEditing ? (
           <div 
-            className="flex items-center gap-4 md:gap-8 select-none cursor-pointer"
+            className="flex items-center select-none cursor-pointer"
+            style={{ gap: hours > 0 ? 'clamp(0.5rem, 2vw, 4rem)' : 'clamp(1rem, 3vw, 5rem)' }}
             onClick={handleTimeClick}
             title={!isRunning ? "Click to edit time" : ""}
           >
             {hours > 0 && (
               <>
                 <div className="flex flex-col items-center">
-                  <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+                  <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: 'clamp(5rem, 12vw, 20rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
                     {String(hours).padStart(2, '0')}
                   </div>
                   <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
                     Hours
                   </div>
                 </div>
-                <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream mb-8 md:mb-12">
+                <div className="font-jet font-bold leading-[0.9] text-cream mb-8 md:mb-12" style={{ fontSize: 'clamp(5rem, 12vw, 20rem)' }}>
                   :
                 </div>
               </>
             )}
             <div className="flex flex-col items-center">
-              <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 12vw, 20rem)' : 'clamp(6rem, 14vw, 24rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
                 {String(minutes).padStart(2, '0')}
               </div>
               <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
@@ -423,12 +424,12 @@ export default function Timer() {
               </div>
             </div>
             
-            <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream mb-8 md:mb-12">
+            <div className="font-jet font-bold leading-[0.9] text-cream mb-8 md:mb-12" style={{ fontSize: hours > 0 ? 'clamp(5rem, 12vw, 20rem)' : 'clamp(6rem, 14vw, 24rem)' }}>
               :
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="font-jet text-[5rem] sm:text-[6rem] md:text-[10rem] lg:text-[12rem] xl:text-[18rem] font-bold leading-[0.9] text-cream tracking-tighter" style={{ textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 12vw, 20rem)' : 'clamp(6rem, 14vw, 24rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
                 {String(seconds).padStart(2, '0')}
               </div>
               <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
