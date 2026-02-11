@@ -4,11 +4,16 @@ A production-ready, SEO-optimized online timer built with Astro and React. Featu
 
 ## 🚀 Features
 
+- **Quick Time Adjustment**: '+' and '-' buttons to quickly add or subtract 5 minutes
 - **Performance**: Deferred hydration using Astro's `client:idle` directive
 - **Dynamic Tab Title**: Timer counts down in browser tab
+- **Multiple Themes**: Choose from Green, Yellow, Blue, Purple, and Red themes
+- **Picture-in-Picture**: Pop-out timer window that stays on top
+- **Focus Mode**: Distraction-free full-timer display
+- **Repeat Mode**: Automatically restart timer when it completes
 - **Responsive Design**: Works beautifully on all devices with Tailwind CSS
 - **Accessibility**: Keyboard navigation and screen reader friendly
-- **Clean UI**: Matches the provided design with dark theme and cream accents
+- **Clean UI**: Dark theme with cream accents and smooth animations
 - **Tailwind CSS**: Utility-first styling for easy customization
 
 ## 📁 Project Structure
@@ -18,14 +23,19 @@ clocktimer.in/
 ├── src/
 │   ├── pages/
 │   │   └── index.astro          # Main page with SEO
-│   └── components/
-│       ├── Timer.tsx             # React timer component
-│       └── Timer.css             # Timer styles
+│   ├── components/
+│   │   └── Timer.tsx             # React timer component
+│   ├── utils/
+│   │   ├── audioUtils.ts         # Alarm sound handling
+│   │   ├── documentUtils.ts      # Dynamic title updates
+│   │   ├── faviconUpdater.ts     # Dynamic favicon colors
+│   │   ├── pipUtils.ts           # Picture-in-Picture support
+│   │   ├── storageUtils.ts       # LocalStorage helpers
+│   │   └── timeUtils.ts          # Time formatting utilities
+│   └── styles/
+│       └── global.css            # Global styles
 ├── public/
-│   ├── favicon-16x16.png
-│   ├── favicon-32x32.png
-│   ├── apple-touch-icon.png
-│   ├── og-image.jpg              # Social media preview (1200x630)
+│   ├── favicon.svg               # Dynamic favicon (changes with theme)
 │   ├── robots.txt
 │   └── site.webmanifest
 ├── astro.config.mjs
@@ -74,15 +84,6 @@ export default defineConfig({
 
 #### robots.txt
 Create `public/robots.txt`:
-
-```
-User-agent: *
-Allow: /
-
-Sitemap: https://clocktimer.in/sitemap.xml
-```
-
-#### site.webmanifest
 Create `public/site.webmanifest`:
 
 ```json
@@ -93,36 +94,11 @@ Create `public/site.webmanifest`:
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
-  "icons": [
-    {
-      "src": "/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "/favicon-32x32.png",
-      "sizes": "32x32",
-      "type": "image/png"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    }
-  ]
+  "theme_color": "#0a0a0a"
 }
 ```
 
-### 5. Generate Favicons
-
-Use [favicon.io](https://favicon.io/) or [realfavicongenerator.net](https://realfavicongenerator.net/) to create:
-- `favicon-16x16.png`
-- `favicon-32x32.png`
-- `apple-touch-icon.png`
-- `og-image.jpg` (1200x630px for social media)
-
-### 6. Update package.json
+### 4. Update package.json
 
 Add these scripts:
 

@@ -11,20 +11,34 @@ export function isPipSupported(): boolean {
 /**
  * Creates the PiP window HTML content
  * @param timeString - Formatted time string to display
+ * @param isRunning - Whether the timer is currently running
+ * @param themeColor - The primary theme color
+ * @param themeDark - The dark theme color
  * @returns HTML string for PiP window
  */
-export function createPipContent(timeString: string): string {
+export function createPipContent(timeString: string, isRunning: boolean = true, themeColor: string = '#22c55e', themeDark: string = '#16a34a'): string {
   return `
+    <style>
+      @keyframes fallDown {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(200px); opacity: 0; }
+      }
+      .fall-animation {
+        animation: fallDown 0.5s ease-in forwards;
+      }
+    </style>
     <div style="
       width: 100%;
       height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: #0a0a0a;
       margin: 0;
       padding: 0;
       font-family: 'JetBrains Mono', monospace;
+      gap: 1.5rem;
     ">
       <div id="pip-time" style="
         font-size: 4rem;
@@ -33,6 +47,27 @@ export function createPipContent(timeString: string): string {
         text-shadow: 0 0 40px rgba(245, 241, 227, 0.3);
         letter-spacing: 0.1em;
       ">${timeString}</div>
+      ${!isRunning ? `
+        <button id="pip-start-btn" style="
+          background: ${themeColor};
+          color: #0a0a0a;
+          border: none;
+          border-radius: 50%;
+          width: 60px;
+          height: 60px;
+          font-family: 'Arial', sans-serif;
+          font-size: 1.5rem;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 4px 0 ${themeDark};
+          transition: all 0.2s;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding-left: 4px;
+        " onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">▶</button>
+      ` : ''}
     </div>
   `;
 }
@@ -76,16 +111,51 @@ export function updatePipTime(pipWindow: Window | null, formattedTime: string): 
 }
 
 /**
+ * Updates the PiP window content based on running state
+ * @param pipWindow - The PiP window object
+ * @param formattedTime - The formatted time string
+ * @param isRunning - Whether the timer is running
+ * @param themeColor - The primary theme color
+ * @param themeDark - The dark theme color
+ * @param onStartClick - Callback when start button is clicked
+ */
+export function updatePipContent(pipWindow: Window | null, formattedTime: string, isRunning: boolean, themeColor: string, themeDark: string, onStartClick?: () => void): void {
+  if (pipWindow) {
+    pipWindow.document.body.innerHTML = createPipContent(formattedTime, isRunning, themeColor, themeDark);
+    
+    if (!isRunning && onStartClick) {
+      const startBtn = pipWindow.document.getElementById('pip-start-btn');
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          startBtn.classList.add('fall-animation');
+          setTimeout(() => {
+            onStartClick();
+          }, 300);
+        });
+      }
+    }
+  }
+}
+
+/**
  * Opens a Picture-in-Picture window
  * @param formattedTime - The formatted time string to display
+ * @param isRunning - Whether the timer is currently running
+ * @param themeColor - The primary theme color
+ * @param themeDark - The dark theme color
+ * @param onStartClick - Callback when start button is clicked
  * @param width - Width of the PiP window (default: 400)
- * @param height - Height of the PiP window (default: 150)
+ * @param height - Height of the PiP window (default: 200)
  * @returns Promise resolving to the PiP window object
  */
 export async function openPipWindow(
   formattedTime: string,
+  isRunning: boolean = true,
+  themeColor: string = '#22c55e',
+  themeDark: string = '#16a34a',
+  onStartClick?: () => void,
   width: number = 400,
-  height: number = 150
+  height: number = 200
 ): Promise<Window> {
   const pipWindow = await (window as any).documentPictureInPicture.requestWindow({
     width,
@@ -99,7 +169,20 @@ export async function openPipWindow(
   copyStylesToPip(pipWindow);
 
   // Create timer display
-  pipWindow.document.body.innerHTML = createPipContent(formattedTime);
+  pipWindow.document.body.innerHTML = createPipContent(formattedTime, isRunning, themeColor, themeDark);
+  
+  // Add start button event listener if not running
+  if (!isRunning && onStartClick) {
+    const startBtn = pipWindow.document.getElementById('pip-start-btn');
+    if (startBtn) {
+      startBtn.addEventListener('click', () => {
+        startBtn.classList.add('fall-animation');
+        setTimeout(() => {
+          onStartClick();
+        }, 300);
+      });
+    }
+  }
 
   return pipWindow;
 }

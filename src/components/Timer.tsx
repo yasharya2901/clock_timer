@@ -4,7 +4,7 @@ import { formatTime, clampTime } from '../utils/timeUtils';
 import { playAlarm } from '../utils/audioUtils';
 import { getStorageItem, setStorageItem, isValidStorageValue } from '../utils/storageUtils';
 import { updateDocumentTitle } from '../utils/documentUtils';
-import { isPipSupported as checkPipSupport, openPipWindow, updatePipTime } from '../utils/pipUtils';
+import { isPipSupported as checkPipSupport, openPipWindow, updatePipTime, updatePipContent } from '../utils/pipUtils';
 
 type Theme = 'green' | 'yellow' | 'blue' | 'purple' | 'red';
 
@@ -18,7 +18,7 @@ const themes = {
 
 export default function Timer() {
   const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(25);
+  const [minutes, setMinutes] = useState(15);
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
@@ -36,7 +36,7 @@ export default function Timer() {
   const intervalRef = useRef<number | null>(null);
   const pipWindowRef = useRef<Window | null>(null);
   const initialHours = useRef(0);
-  const initialMinutes = useRef(25);
+  const initialMinutes = useRef(15);
   const initialSeconds = useRef(0);
 
   // Check PiP support on mount
@@ -98,6 +98,14 @@ export default function Timer() {
       updatePipTime(pipWindowRef.current, formattedTime);
     }
   }, [hours, minutes, seconds, isPipActive]);
+
+  // Update PiP window when running state changes
+  useEffect(() => {
+    if (isPipActive && pipWindowRef.current) {
+      const formattedTime = formatTime(hours, minutes, seconds);
+      updatePipContent(pipWindowRef.current, formattedTime, isRunning, displayTheme.primary, displayTheme.dark, handleStart);
+    }
+  }, [isRunning, isPipActive]);
 
   // Timer logic
   useEffect(() => {
@@ -229,6 +237,36 @@ export default function Timer() {
     }
   };
 
+  const handleQuickAdd = () => {
+    if (!isRunning) {
+      const newMinutes = minutes + 5;
+      if (newMinutes > 59) {
+        const addedHours = Math.floor(newMinutes / 60);
+        const remainingMinutes = newMinutes % 60;
+        setHours(Math.min(hours + addedHours, 99));
+        setMinutes(remainingMinutes);
+      } else {
+        setMinutes(newMinutes);
+      }
+    }
+  };
+
+  const handleQuickSubtract = () => {
+    if (!isRunning) {
+      const newMinutes = minutes - 5;
+      if (newMinutes < 0) {
+        if (hours > 0) {
+          setHours(hours - 1);
+          setMinutes(60 + newMinutes);
+        } else {
+          setMinutes(0);
+        }
+      } else {
+        setMinutes(newMinutes);
+      }
+    }
+  };
+
   const currentTheme = themes[theme];
   const displayTheme = {
     primary: isInitialLoad ? '#f5f1e3' : currentTheme.primary,
@@ -256,7 +294,7 @@ export default function Timer() {
       } else {
         // Open PiP
         const timeString = formatTime(hours, minutes, seconds);
-        const pipWindow = await openPipWindow(timeString);
+        const pipWindow = await openPipWindow(timeString, isRunning, displayTheme.primary, displayTheme.dark, handleStart);
 
         pipWindowRef.current = pipWindow;
         setIsPipActive(true);
@@ -394,12 +432,13 @@ export default function Timer() {
       <div className="flex-1 flex flex-col items-center justify-center gap-8 md:gap-16 px-4 md:px-8 py-8">
         {/* Timer Display */}
         {!isEditing ? (
-          <div 
-            className="flex items-center select-none cursor-pointer"
-            style={{ gap: hours > 0 ? 'clamp(0.5rem, 2vw, 4rem)' : 'clamp(1rem, 3vw, 5rem)' }}
-            onClick={handleTimeClick}
-            title={!isRunning ? "Click to edit time" : ""}
-          >
+          <div className="flex items-center gap-12 md:gap-20">
+            <div 
+              className="flex items-center select-none cursor-pointer"
+              style={{ gap: hours > 0 ? 'clamp(0.5rem, 2vw, 4rem)' : 'clamp(1rem, 3vw, 5rem)' }}
+              onClick={handleTimeClick}
+              title={!isRunning ? "Click to edit time" : ""}
+            >
             {hours > 0 && (
               <>
                 <div className="flex flex-col items-center">
@@ -436,6 +475,52 @@ export default function Timer() {
                 Seconds
               </div>
             </div>
+          </div>
+          {/* Quick adjustment buttons */}
+          {!isRunning && (
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={handleQuickAdd}
+                className="w-[48px] h-[48px] md:w-[56px] md:h-[56px] rounded-full border-2 bg-transparent text-[2rem] md:text-[2.25rem] font-bold cursor-pointer flex items-center justify-center transition-all duration-300 leading-none"
+                style={{ 
+                  borderColor: displayTheme.primary,
+                  color: displayTheme.primary,
+                  transition: 'color 0.3s, background-color 0.3s, border-color 1s ease-in-out'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = displayTheme.primary;
+                  e.currentTarget.style.color = '#0a0a0a';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = displayTheme.primary;
+                }}
+                title="Add 5 minutes"
+              >
+                +
+              </button>
+              <button
+                onClick={handleQuickSubtract}
+                className="w-[48px] h-[48px] md:w-[56px] md:h-[56px] rounded-full border-2 bg-transparent text-[2rem] md:text-[2.25rem] font-bold cursor-pointer flex items-center justify-center transition-all duration-300 leading-none"
+                style={{ 
+                  borderColor: displayTheme.primary,
+                  color: displayTheme.primary,
+                  transition: 'color 0.3s, background-color 0.3s, border-color 1s ease-in-out'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = displayTheme.primary;
+                  e.currentTarget.style.color = '#0a0a0a';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = displayTheme.primary;
+                }}
+                title="Subtract 5 minutes"
+              >
+                −
+              </button>
+            </div>
+          )}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-6 order-1 md:order-2">
