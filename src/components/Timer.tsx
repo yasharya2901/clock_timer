@@ -355,33 +355,33 @@ export default function Timer() {
       {timerOnlyMode ? (
         // Timer-only mode: Just the timer, click anywhere to exit
         <div 
-          className="w-full h-full flex items-center justify-center cursor-pointer px-4"
+          className="w-full h-full flex items-center justify-center cursor-pointer px-2 md:px-4"
           onClick={() => setTimerOnlyMode(false)}
           title="Click anywhere or press ESC to exit focus mode"
         >
-          <div className="flex items-center select-none" style={{ gap: hours > 0 ? 'clamp(0.5rem, 2vw, 3rem)' : 'clamp(1rem, 3vw, 4rem)' }}>
+          <div className="flex items-center select-none" style={{ gap: hours > 0 ? 'clamp(0.25rem, 1.5vw, 3rem)' : 'clamp(0.5rem, 2.5vw, 4rem)' }}>
             {hours > 0 && (
               <>
                 <div className="flex flex-col items-center">
-                  <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: 'clamp(5rem, 15vw, 24rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+                  <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: 'clamp(3.5rem, 13vw, 24rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                     {String(hours).padStart(2, '0')}
                   </div>
                 </div>
-                <div className="font-jet font-bold leading-[0.9] text-cream" style={{ fontSize: 'clamp(5rem, 15vw, 24rem)' }}>
+                <div className="font-jet font-bold leading-[0.9] text-cream" style={{ fontSize: 'clamp(3.5rem, 13vw, 24rem)' }}>
                   :
                 </div>
               </>
             )}
             <div className="flex flex-col items-center">
-              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 15vw, 24rem)' : 'clamp(6rem, 18vw, 30rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(3.5rem, 13vw, 24rem)' : 'clamp(4.5rem, 16vw, 30rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                 {String(minutes).padStart(2, '0')}
               </div>
             </div>
-            <div className="font-jet font-bold leading-[0.9] text-cream" style={{ fontSize: hours > 0 ? 'clamp(5rem, 15vw, 24rem)' : 'clamp(6rem, 18vw, 30rem)' }}>
+            <div className="font-jet font-bold leading-[0.9] text-cream" style={{ fontSize: hours > 0 ? 'clamp(3.5rem, 13vw, 24rem)' : 'clamp(4.5rem, 16vw, 30rem)' }}>
               :
             </div>
             <div className="flex flex-col items-center">
-              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 15vw, 24rem)' : 'clamp(6rem, 18vw, 30rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(3.5rem, 13vw, 24rem)' : 'clamp(4.5rem, 16vw, 30rem)', textShadow: '0 0 60px rgba(245, 241, 227, 0.4)' }}>
                 {String(seconds).padStart(2, '0')}
               </div>
             </div>
@@ -469,59 +469,59 @@ export default function Timer() {
       </nav>
 
       {/* Main Timer Container */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 md:gap-16 px-4 md:px-8 py-8">
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 md:gap-8 lg:gap-16 px-2 md:px-4 lg:px-8 py-2 md:py-4 lg:py-8">
         {/* Timer Display */}
         {!isEditing ? (
-          <div className="flex items-center gap-12 md:gap-20">
+          <div className="flex items-center gap-4 md:gap-12 lg:gap-20">
             <div 
               className="flex items-center select-none cursor-pointer"
-              style={{ gap: hours > 0 ? 'clamp(0.5rem, 2vw, 4rem)' : 'clamp(1rem, 3vw, 5rem)' }}
+              style={{ gap: hours > 0 ? 'clamp(0.25rem, 1.5vw, 4rem)' : 'clamp(0.5rem, 2.5vw, 5rem)' }}
               onClick={handleTimeClick}
               title={!isRunning ? "Click to edit time" : ""}
             >
             {hours > 0 && (
               <>
                 <div className="flex flex-col items-center">
-                  <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: 'clamp(5rem, 12vw, 20rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+                  <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(3rem, 10vw, 20rem)' : 'clamp(5rem, 12vw, 20rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
                     {String(hours).padStart(2, '0')}
                   </div>
-                  <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
+                  <div className="font-mono text-xs md:text-sm lg:text-base xl:text-xl text-cream mt-0.5 md:mt-1 lg:mt-2 capitalize">
                     Hours
                   </div>
                 </div>
-                <div className="font-jet font-bold leading-[0.9] text-cream mb-8 md:mb-12" style={{ fontSize: 'clamp(5rem, 12vw, 20rem)' }}>
+                <div className="font-jet font-bold leading-[0.9] text-cream mb-4 md:mb-8 lg:mb-12" style={{ fontSize: 'clamp(3rem, 10vw, 20rem)' }}>
                   :
                 </div>
               </>
             )}
             <div className="flex flex-col items-center">
-              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 12vw, 20rem)' : 'clamp(6rem, 14vw, 24rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(3rem, 10vw, 20rem)' : 'clamp(4rem, 12vw, 24rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
                 {String(minutes).padStart(2, '0')}
               </div>
-              <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
+              <div className="font-mono text-xs md:text-sm lg:text-base xl:text-xl text-cream mt-0.5 md:mt-1 lg:mt-2 capitalize">
                 Minutes
               </div>
             </div>
             
-            <div className="font-jet font-bold leading-[0.9] text-cream mb-8 md:mb-12" style={{ fontSize: hours > 0 ? 'clamp(5rem, 12vw, 20rem)' : 'clamp(6rem, 14vw, 24rem)' }}>
+            <div className="font-jet font-bold leading-[0.9] text-cream mb-4 md:mb-8 lg:mb-12" style={{ fontSize: hours > 0 ? 'clamp(3rem, 10vw, 20rem)' : 'clamp(4rem, 12vw, 24rem)' }}>
               :
             </div>
             
             <div className="flex flex-col items-center">
-              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(5rem, 12vw, 20rem)' : 'clamp(6rem, 14vw, 24rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
+              <div className="font-jet font-bold leading-[0.9] text-cream tracking-tighter" style={{ fontSize: hours > 0 ? 'clamp(3rem, 10vw, 20rem)' : 'clamp(4rem, 12vw, 24rem)', textShadow: '0 0 40px rgba(245, 241, 227, 0.3)' }}>
                 {String(seconds).padStart(2, '0')}
               </div>
-              <div className="font-mono text-sm md:text-base lg:text-xl text-cream mt-1 md:mt-2 capitalize">
+              <div className="font-mono text-xs md:text-sm lg:text-base xl:text-xl text-cream mt-0.5 md:mt-1 lg:mt-2 capitalize">
                 Seconds
               </div>
             </div>
           </div>
           {/* Quick adjustment buttons */}
           {!isRunning && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 md:gap-4">
               <button
                 onClick={handleQuickAdd}
-                className="w-[48px] h-[48px] md:w-[56px] md:h-[56px] rounded-full border-2 bg-transparent text-[2rem] md:text-[2.25rem] font-bold cursor-pointer flex items-center justify-center transition-all duration-300 leading-none"
+                className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] lg:w-[56px] lg:h-[56px] rounded-full border-2 bg-transparent text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] font-bold cursor-pointer flex items-center justify-center transition-all duration-300 leading-none"
                 style={{ 
                   borderColor: displayTheme.primary,
                   color: displayTheme.primary,
@@ -541,7 +541,7 @@ export default function Timer() {
               </button>
               <button
                 onClick={handleQuickSubtract}
-                className="w-[48px] h-[48px] md:w-[56px] md:h-[56px] rounded-full border-2 bg-transparent text-[2rem] md:text-[2.25rem] font-bold cursor-pointer flex items-center justify-center transition-all duration-300 leading-none"
+                className="w-[40px] h-[40px] md:w-[48px] md:h-[48px] lg:w-[56px] lg:h-[56px] rounded-full border-2 bg-transparent text-[1.75rem] md:text-[2rem] lg:text-[2.25rem] font-bold cursor-pointer flex items-center justify-center transition-all duration-300 leading-none"
                 style={{ 
                   borderColor: displayTheme.primary,
                   color: displayTheme.primary,
@@ -654,10 +654,10 @@ export default function Timer() {
 
         {/* Controls - below timer */}
         {!isEditing && (
-          <div className="flex flex-row gap-4 md:gap-6 items-center">
+          <div className="flex flex-row gap-3 md:gap-4 lg:gap-6 items-center">
             <button 
               onClick={handleStart}
-              className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
+              className="border-none rounded-[50px] px-6 md:px-8 lg:px-10 py-2 md:py-3 lg:py-4 font-mono text-sm md:text-base lg:text-lg font-bold text-bg-black transition-all duration-200 relative"
               style={{ 
                 backgroundColor: displayTheme.primary,
                 boxShadow: `0 4px 0 ${displayTheme.dark}`,
@@ -671,7 +671,7 @@ export default function Timer() {
             </button>
             <button 
               onClick={handleReset}
-              className="border-none rounded-[50px] px-8 md:px-10 py-3 md:py-4 font-mono text-base md:text-lg font-bold text-bg-black transition-all duration-200 relative"
+              className="border-none rounded-[50px] px-6 md:px-8 lg:px-10 py-2 md:py-3 lg:py-4 font-mono text-sm md:text-base lg:text-lg font-bold text-bg-black transition-all duration-200 relative"
               style={{ 
                 backgroundColor: displayTheme.primary,
                 boxShadow: `0 4px 0 ${displayTheme.dark}`,
