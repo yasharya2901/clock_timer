@@ -1,4 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { updateFavicon } from '../utils/faviconUpdater';
+import { formatTime, clampTime } from '../utils/timeUtils';
+import { playAlarm } from '../utils/audioUtils';
+import { getStorageItem, setStorageItem, isValidStorageValue } from '../utils/storageUtils';
+import { updateDocumentTitle } from '../utils/documentUtils';
+import { isPipSupported as checkPipSupport, openPipWindow, updatePipTime } from '../utils/pipUtils';
 
 type Theme = 'green' | 'yellow' | 'blue' | 'purple' | 'red';
 
@@ -33,24 +39,15 @@ export default function Timer() {
   const initialMinutes = useRef(25);
   const initialSeconds = useRef(0);
 
-  // Helper function to format time string
-  const formatTime = (h: number, m: number, s: number) => {
-    const parts = [];
-    if (h > 0) parts.push(String(h).padStart(2, '0'));
-    parts.push(String(m).padStart(2, '0'));
-    parts.push(String(s).padStart(2, '0'));
-    return parts.join(':');
-  };
-
   // Check PiP support on mount
   useEffect(() => {
-    setIsPipSupported('documentPictureInPicture' in window);
+    setIsPipSupported(checkPipSupport());
   }, []);
 
   // Load theme from localStorage on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('timer-theme');
-    if (savedTheme && savedTheme in themes) {
+    const savedTheme = getStorageItem('timer-theme', 'green');
+    if (isValidStorageValue(savedTheme, themes)) {
       setTheme(savedTheme as Theme);
     }
     // Trigger transition from white to theme color after a brief delay
@@ -59,9 +56,22 @@ export default function Timer() {
     }, 100);
   }, []);
 
+  // Update favicon when theme changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Start with white, then transition to theme color
+      if (isInitialLoad) {
+        updateFavicon('#ffffff');
+      } else {
+        const themeColor = themes[theme].primary;
+        updateFavicon(themeColor);
+      }
+    }
+  }, [theme, isInitialLoad]);
+
   // Save theme to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('timer-theme', theme);
+    setStorageItem('timer-theme', theme);
   }, [theme]);
 
   // Handle ESC key to exit timer-only mode
@@ -78,21 +88,14 @@ export default function Timer() {
   // Update document title dynamically
   useEffect(() => {
     const formattedTime = formatTime(hours, minutes, seconds);
-    if (isRunning) {
-      document.title = `${formattedTime} - ClockTimer.in`;
-    } else {
-      document.title = 'Online Timer - Free Countdown Timer | ClockTimer.in';
-    }
+    updateDocumentTitle(formattedTime, isRunning);
   }, [hours, minutes, seconds, isRunning]);
 
   // Update PiP window when time changes
   useEffect(() => {
     if (isPipActive && pipWindowRef.current) {
-      const pipDoc = pipWindowRef.current.document;
-      const timeElement = pipDoc.getElementById('pip-time');
-      if (timeElement) {
-        timeElement.textContent = formatTime(hours, minutes, seconds);
-      }
+      const formattedTime = formatTime(hours, minutes, seconds);
+      updatePipTime(pipWindowRef.current, formattedTime);
     }
   }, [hours, minutes, seconds, isPipActive]);
 
@@ -152,23 +155,6 @@ export default function Timer() {
     };
   }, [isRunning, isRepeat, hours, minutes, seconds]);
 
-  const playAlarm = () => {
-    // Simple beep using Web Audio API
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.value = 800;
-    oscillator.type = 'sine';
-    gainNode.gain.value = 0.3;
-    
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.3);
-  };
-
   const handleStart = () => {
     if (!isRunning) {
       // If timer is at 0:0:0, reset to initial values
@@ -207,9 +193,9 @@ export default function Timer() {
     const newMinutes = parseInt(editMinutes) || 0;
     const newSeconds = parseInt(editSeconds) || 0;
     
-    setHours(Math.min(Math.max(newHours, 0), 99));
-    setMinutes(Math.min(Math.max(newMinutes, 0), 59));
-    setSeconds(Math.min(Math.max(newSeconds, 0), 59));
+    setHours(clampTime(newHours, 0, 99));
+    setMinutes(clampTime(newMinutes, 0, 59));
+    setSeconds(clampTime(newSeconds, 0, 59));
     setIsEditing(false);
   };
 
@@ -269,60 +255,11 @@ export default function Timer() {
         setIsPipActive(false);
       } else {
         // Open PiP
-        const pipWindow = await (window as any).documentPictureInPicture.requestWindow({
-          width: 400,
-          height: 150,
-        });
+        const timeString = formatTime(hours, minutes, seconds);
+        const pipWindow = await openPipWindow(timeString);
 
         pipWindowRef.current = pipWindow;
         setIsPipActive(true);
-
-        // Set minimal title
-        pipWindow.document.title = '';
-
-        // Copy styles to PiP window
-        const styleSheets = Array.from(document.styleSheets);
-        styleSheets.forEach((styleSheet) => {
-          try {
-            const cssRules = Array.from(styleSheet.cssRules)
-              .map((rule) => rule.cssText)
-              .join('');
-            const style = pipWindow.document.createElement('style');
-            style.textContent = cssRules;
-            pipWindow.document.head.appendChild(style);
-          } catch (e) {
-            // Cross-origin stylesheets will throw, add link instead
-            const link = pipWindow.document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = (styleSheet as any).href;
-            pipWindow.document.head.appendChild(link);
-          }
-        });
-
-        // Create minimal timer display
-        const timeString = formatTime(hours, minutes, seconds);
-
-        pipWindow.document.body.innerHTML = `
-          <div style="
-            width: 100%;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #0a0a0a;
-            margin: 0;
-            padding: 0;
-            font-family: 'JetBrains Mono', monospace;
-          ">
-            <div id="pip-time" style="
-              font-size: 4rem;
-              font-weight: bold;
-              color: #f5f1e3;
-              text-shadow: 0 0 40px rgba(245, 241, 227, 0.3);
-              letter-spacing: 0.1em;
-            ">${timeString}</div>
-          </div>
-        `;
 
         // Handle PiP window close
         pipWindow.addEventListener('pagehide', () => {
