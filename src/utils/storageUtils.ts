@@ -1,6 +1,38 @@
 // LocalStorage utilities with type safety
 
 /**
+ * Timer settings interface
+ */
+export interface TimerSettings {
+  countdownSound: string; // 'off', '5', '10', '15', or custom number as string
+  customCountdownValues?: string[]; // Array of custom countdown values
+}
+
+/**
+ * Default settings for new users
+ */
+const DEFAULT_SETTINGS: TimerSettings = {
+  countdownSound: '5',
+  customCountdownValues: [],
+};
+
+/**
+ * Gets timer settings from localStorage
+ * @returns The stored settings or default settings
+ */
+export function getTimerSettings(): TimerSettings {
+  return getStorageJson<TimerSettings>('timer-settings', DEFAULT_SETTINGS);
+}
+
+/**
+ * Saves timer settings to localStorage
+ * @param settings - The settings to save
+ */
+export function saveTimerSettings(settings: TimerSettings): void {
+  setStorageJson('timer-settings', settings);
+}
+
+/**
  * Gets an item from localStorage with type safety
  * @param key - The storage key
  * @param defaultValue - Default value if key doesn't exist

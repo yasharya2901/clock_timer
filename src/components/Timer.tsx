@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { updateFavicon } from '../utils/faviconUpdater';
 import { formatTime, clampTime } from '../utils/timeUtils';
-import { playAlarm } from '../utils/audioUtils';
-import { getStorageItem, setStorageItem, isValidStorageValue, getSessionJson, setSessionJson } from '../utils/storageUtils';
+import { playAlarm, playCountdownBeep } from '../utils/audioUtils';
+import { getStorageItem, setStorageItem, isValidStorageValue, getSessionJson, setSessionJson, getTimerSettings, saveTimerSettings, type TimerSettings } from '../utils/storageUtils';
 import { updateDocumentTitle } from '../utils/documentUtils';
 import { isPipSupported as checkPipSupport, openPipWindow, updatePipTime, updatePipContent } from '../utils/pipUtils';
 
@@ -33,6 +33,10 @@ export default function Timer() {
   const [isPipActive, setIsPipActive] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [timerOnlyMode, setTimerOnlyMode] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [settings, setSettings] = useState<TimerSettings>(getTimerSettings());
+  const [customInput, setCustomInput] = useState('');
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
   const intervalRef = useRef<number | null>(null);
   const pipWindowRef = useRef<Window | null>(null);
   const initialHours = useRef(0);
@@ -152,6 +156,17 @@ export default function Timer() {
     if (isRunning) {
       intervalRef.current = window.setInterval(() => {
         setSeconds(prev => {
+          // Calculate total remaining seconds (before decrement)
+          const totalSeconds = hours * 3600 + minutes * 60 + prev;
+          
+          // Play countdown beep if enabled and at threshold
+          if (settings.countdownSound !== 'off') {
+            const threshold = parseInt(settings.countdownSound);
+            if (!isNaN(threshold) && totalSeconds > 0 && totalSeconds <= threshold) {
+              playCountdownBeep();
+            }
+          }
+          
           if (prev === 0) {
             setMinutes(prevMin => {
               if (prevMin === 0) {
@@ -201,7 +216,12 @@ export default function Timer() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isRepeat, hours, minutes, seconds]);
+  }, [isRunning, isRepeat, hours, minutes, seconds, settings.countdownSound]);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    saveTimerSettings(settings);
+  }, [settings]);
 
   const handleStart = () => {
     if (!isRunning) {
@@ -350,6 +370,59 @@ export default function Timer() {
     }
   };
 
+  const handleCountdownSoundChange = (value: string) => {
+    if (value === 'custom') {
+      setIsAddingCustom(true);
+      setCustomInput('');
+    } else {
+      setSettings(prev => ({ ...prev, countdownSound: value }));
+    }
+  };
+
+  const handleCustomSubmit = () => {
+    const customValue = parseInt(customInput);
+    if (!isNaN(customValue) && customValue > 0) {
+      const customStr = String(customValue);
+      setSettings(prev => {
+        const existingCustomValues = prev.customCountdownValues || [];
+        const updatedCustomValues = [...existingCustomValues, customStr]
+          .filter((v, i, arr) => arr.indexOf(v) === i) // Remove duplicates
+          .slice(-2); // Keep only last 2 custom values
+        
+        return {
+          ...prev,
+          countdownSound: customStr,
+          customCountdownValues: updatedCustomValues,
+        };
+      });
+      setIsAddingCustom(false);
+      setCustomInput('');
+    }
+  };
+
+  const handleCustomKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleCustomSubmit();
+    } else if (e.key === 'Escape') {
+      setIsAddingCustom(false);
+      setCustomInput('');
+    }
+  };
+
+  const getAllCountdownOptions = () => {
+    const baseOptions = ['5', '10', '15'];
+    const customOptions = settings.customCountdownValues || [];
+    
+    // Combine base and custom options, convert to numbers for sorting
+    const allNumericOptions = [...baseOptions, ...customOptions]
+      .map(v => parseInt(v))
+      .filter((v, i, arr) => arr.indexOf(v) === i) // Remove duplicates
+      .sort((a, b) => a - b) // Sort in ascending order
+      .map(v => String(v)); // Convert back to strings
+    
+    return ['off', ...allNumericOptions, 'custom'];
+  };
+
   return (
     <div className="w-screen h-screen flex flex-col bg-bg-black text-cream overflow-hidden">
       {timerOnlyMode ? (
@@ -390,7 +463,7 @@ export default function Timer() {
       ) : (
         // Normal mode with navigation and controls
         <>
-      <nav className="flex flex-col md:flex-row justify-between items-center px-4 md:px-8 py-4 md:py-6 relative z-10 gap-4 md:gap-0">
+      <nav className="flex flex-col md:flex-row justify-center md:justify-between items-center px-4 md:px-8 py-4 md:py-6 relative z-10 gap-4 md:gap-0">
         <div className="flex items-center gap-4 md:gap-6">
           <div className="relative">
             <button 
@@ -420,7 +493,7 @@ export default function Timer() {
           </div>
         </div>
         
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex flex-wrap md:flex-nowrap items-center justify-center gap-4 md:gap-6">
           <label className="flex items-center gap-2 md:gap-3 cursor-pointer text-sm md:text-base text-cream">
             <span>Repeat</span>
             <input
@@ -454,6 +527,16 @@ export default function Timer() {
             onMouseLeave={(e) => e.currentTarget.style.color = '#f5f1e3'}
           >
             <span className="text-base md:text-lg">◯</span> Focus
+          </button>
+          
+          <button 
+            onClick={() => setShowSettingsModal(true)}
+            className="flex items-center gap-2 bg-transparent border-none text-cream font-mono text-sm md:text-base cursor-pointer transition-colors duration-200"
+            style={{ transition: 'color 0.2s' }}
+            onMouseEnter={(e) => e.currentTarget.style.color = displayTheme.primary}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#f5f1e3'}
+          >
+            <span className="text-base md:text-lg">⚙</span> Settings
           </button>
           
           <button 
@@ -687,6 +770,98 @@ export default function Timer() {
         )}
       </div>
         </>
+      )}
+      
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4"
+          onClick={() => setShowSettingsModal(false)}
+        >
+          <div 
+            className="bg-gray-900 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto mx-4 md:mx-0 md:w-1/3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-gray-700">
+              <h2 className="text-xl font-mono font-bold text-cream">Settings</h2>
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="text-cream text-2xl bg-transparent border-none cursor-pointer hover:opacity-70 transition-opacity"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Countdown Sound Setting */}
+              <div>
+                <label className="block text-cream font-mono text-sm mb-2">
+                  Allow Countdown Sound
+                </label>
+                <p className="text-gray-400 text-xs mb-3">
+                  Beep every second when timer reaches the selected threshold
+                </p>
+                {!isAddingCustom ? (
+                  <select
+                    value={settings.countdownSound}
+                    onChange={(e) => handleCountdownSoundChange(e.target.value)}
+                    className="w-full bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-none font-mono cursor-pointer"
+                    style={{ 
+                      borderColor: displayTheme.primary,
+                      transition: 'border-color 1s ease-in-out'
+                    }}
+                  >
+                    {getAllCountdownOptions().map((option) => (
+                      <option key={option} value={option}>
+                        {option === 'off' ? 'Off' : option === 'custom' ? 'Custom...' : `${option} seconds`}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={customInput}
+                      onChange={(e) => setCustomInput(e.target.value)}
+                      onKeyDown={handleCustomKeyDown}
+                      placeholder="Enter seconds"
+                      min="1"
+                      autoFocus
+                      className="flex-1 bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      style={{ 
+                        borderColor: displayTheme.primary,
+                        transition: 'border-color 1s ease-in-out'
+                      }}
+                    />
+                    <button
+                      onClick={handleCustomSubmit}
+                      className="px-4 py-3 rounded-lg font-mono font-bold text-bg-black hover:opacity-80 transition-opacity"
+                      style={{ 
+                        backgroundColor: displayTheme.primary,
+                        transition: 'background-color 1s ease-in-out'
+                      }}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsAddingCustom(false);
+                        setCustomInput('');
+                      }}
+                      className="px-4 py-3 rounded-lg font-mono font-bold bg-gray-700 text-cream hover:bg-gray-600 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Future settings will be added here */}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
