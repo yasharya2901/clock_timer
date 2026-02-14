@@ -1,0 +1,182 @@
+---
+// 404 Page - Custom Not Found page with auto-redirect
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Page Not Found | ClockTimer.in</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'JetBrains Mono', monospace;
+        background-color: #0a0a0a;
+        color: #f5f1e3;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        text-align: center;
+      }
+
+      .container {
+        max-width: 600px;
+      }
+
+      .error-code {
+        font-size: clamp(5rem, 15vw, 10rem);
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 40px rgba(245, 241, 227, 0.3);
+      }
+
+      h1 {
+        font-size: clamp(1.5rem, 4vw, 2.5rem);
+        margin-bottom: 1rem;
+        font-weight: 700;
+      }
+
+      .message {
+        font-size: clamp(1rem, 2.5vw, 1.25rem);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+        opacity: 0.9;
+      }
+
+      .countdown {
+        font-size: clamp(1.25rem, 3vw, 1.5rem);
+        margin-bottom: 2rem;
+        color: #f5f1e3;
+        font-weight: 700;
+        transition: color 1s ease-in-out;
+      }
+
+      .link {
+        display: inline-block;
+        padding: 1rem 2rem;
+        background-color: #f5f1e3;
+        color: #0a0a0a;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s, background-color 1s ease-in-out, box-shadow 1s ease-in-out;
+        box-shadow: 0 4px 0 #d4cfc0;
+      }
+
+      .link:hover {
+        transform: translateY(-2px);
+      }
+
+      .link:active {
+        transform: translateY(0);
+      }
+
+      @media (max-width: 640px) {
+        .message {
+          font-size: 0.875rem;
+        }
+        
+        .link {
+          padding: 0.875rem 1.5rem;
+          font-size: 0.875rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="error-code">404</div>
+      <h1>Oops! You've wandered off...</h1>
+      <p class="message">
+        Looks like this page doesn't exist. But hey, no worries! We're taking you back home where all the timing magic happens.
+      </p>
+      <div class="countdown" id="countdown">
+        Redirecting in 3 seconds...
+      </div>
+      <a href="/" class="link" id="homeLink">
+        Click here if you're not redirected automatically
+      </a>
+    </div>
+
+    <script>
+      // Theme mapping (same as Timer.tsx)
+      const themes = {
+        green: { primary: '#22c55e', dark: '#16a34a' },
+        yellow: { primary: '#ffd700', dark: '#ccaa00' },
+        blue: { primary: '#3b82f6', dark: '#2563eb' },
+        purple: { primary: '#a855f7', dark: '#9333ea' },
+        red: { primary: '#ef4444', dark: '#dc2626' },
+      };
+
+      // Get the current origin (handles localhost, clocktimer.in, www.clocktimer.in, etc.)
+      const origin = window.location.origin;
+      const homeUrl = origin + '/';
+
+      // Update the link to use current origin
+      const homeLink = document.getElementById('homeLink') as HTMLAnchorElement;
+      if (homeLink) {
+        homeLink.href = homeUrl;
+      }
+
+      // Load theme from localStorage and apply after brief delay (like Timer.tsx)
+      setTimeout(() => {
+        try {
+          const savedTheme = localStorage.getItem('timer-theme') || 'green';
+          const theme = themes[savedTheme as keyof typeof themes] || themes.green;
+          
+          const countdownEl = document.getElementById('countdown');
+          const linkEl = document.getElementById('homeLink');
+          
+          if (countdownEl) {
+            countdownEl.style.color = theme.primary;
+          }
+          
+          if (linkEl) {
+            linkEl.style.backgroundColor = theme.primary;
+            linkEl.style.boxShadow = `0 4px 0 ${theme.dark}`;
+          }
+        } catch (error) {
+          console.error('Error loading theme:', error);
+        }
+      }, 100);
+
+      // Countdown and redirect
+      let secondsLeft = 3;
+      const countdownEl = document.getElementById('countdown');
+
+      const interval = setInterval(() => {
+        secondsLeft--;
+        if (countdownEl) {
+          if (secondsLeft > 0) {
+            countdownEl.textContent = `Redirecting in ${secondsLeft} ${secondsLeft === 1 ? 'second' : 'seconds'}...`;
+          } else {
+            countdownEl.textContent = 'Redirecting now...';
+          }
+        }
+
+        if (secondsLeft <= 0) {
+          clearInterval(interval);
+          window.location.href = homeUrl;
+        }
+      }, 1000);
+    </script>
+  </body>
+</html>
