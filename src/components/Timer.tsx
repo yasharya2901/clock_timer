@@ -5,6 +5,7 @@ import { playAlarm, playCountdownBeep } from '../utils/audioUtils';
 import { getStorageItem, setStorageItem, isValidStorageValue, getSessionJson, setSessionJson, getTimerSettings, saveTimerSettings, type TimerSettings } from '../utils/storageUtils';
 import { updateDocumentTitle } from '../utils/documentUtils';
 import { isPipSupported as checkPipSupport, openPipWindow, updatePipTime, updatePipContent } from '../utils/pipUtils';
+import { initializeSounds, SOUND_OPTIONS, isValidSound } from '../utils/soundManager';
 
 type Theme = 'green' | 'yellow' | 'blue' | 'purple' | 'red';
 
@@ -34,7 +35,11 @@ export default function Timer() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [timerOnlyMode, setTimerOnlyMode] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [settings, setSettings] = useState<TimerSettings>(getTimerSettings());
+  const [settings, setSettings] = useState<TimerSettings>({
+    countdownSound: '5',
+    customCountdownValues: [],
+    timerSound: 'default',
+  });
   const [customInput, setCustomInput] = useState('');
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -46,6 +51,22 @@ export default function Timer() {
   // Check PiP support on mount
   useEffect(() => {
     setIsPipSupported(checkPipSupport());
+  }, []);
+
+  // Load settings from localStorage and initialize sounds (client-side only)
+  useEffect(() => {
+    // Load saved settings from localStorage
+    const savedSettings = getTimerSettings();
+    
+    // Validate saved sound preference
+    if (savedSettings.timerSound && !isValidSound(savedSettings.timerSound)) {
+      savedSettings.timerSound = 'default';
+    }
+    
+    setSettings(savedSettings);
+    
+    // Initialize sound manager with caching
+    initializeSounds();
   }, []);
 
   // Load timer state from sessionStorage on mount
@@ -163,7 +184,7 @@ export default function Timer() {
           if (settings.countdownSound !== 'off') {
             const threshold = parseInt(settings.countdownSound);
             if (!isNaN(threshold) && totalSeconds > 0 && totalSeconds <= threshold) {
-              playCountdownBeep();
+              playCountdownBeep(settings.timerSound);
             }
           }
           
@@ -173,7 +194,7 @@ export default function Timer() {
                 setHours(prevHours => {
                   if (prevHours === 0) {
                     // Timer complete
-                    playAlarm();
+                    playAlarm(settings.timerSound);
                     if (isRepeat) {
                       // Reset to initial time and keep running
                       setHours(initialHours.current);
@@ -216,7 +237,7 @@ export default function Timer() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, isRepeat, hours, minutes, seconds, settings.countdownSound]);
+  }, [isRunning, isRepeat, hours, minutes, seconds, settings.countdownSound, settings.timerSound]);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -856,6 +877,31 @@ export default function Timer() {
                     </button>
                   </div>
                 )}
+              </div>
+              
+              {/* Timer Sound Setting */}
+              <div>
+                <label className="block text-cream font-mono text-sm mb-2">
+                  Timer Sound
+                </label>
+                <p className="text-gray-400 text-xs mb-3">
+                  Sound to play for countdown beeps and final alarm
+                </p>
+                <select
+                  value={settings.timerSound}
+                  onChange={(e) => setSettings(prev => ({ ...prev, timerSound: e.target.value }))}
+                  className="w-full bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-none font-mono cursor-pointer"
+                  style={{ 
+                    borderColor: displayTheme.primary,
+                    transition: 'border-color 1s ease-in-out'
+                  }}
+                >
+                  {SOUND_OPTIONS.map((sound) => (
+                    <option key={sound.id} value={sound.id}>
+                      {sound.displayName}
+                    </option>
+                  ))}
+                </select>
               </div>
               
               {/* Future settings will be added here */}

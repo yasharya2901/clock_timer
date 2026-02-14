@@ -6,6 +6,7 @@
 export interface TimerSettings {
   countdownSound: string; // 'off', '5', '10', '15', or custom number as string
   customCountdownValues?: string[]; // Array of custom countdown values
+  timerSound: string; // Sound ID for timer alarm and countdown beeps
 }
 
 /**
@@ -14,6 +15,7 @@ export interface TimerSettings {
 const DEFAULT_SETTINGS: TimerSettings = {
   countdownSound: '5',
   customCountdownValues: [],
+  timerSound: 'default',
 };
 
 /**
@@ -40,6 +42,7 @@ export function saveTimerSettings(settings: TimerSettings): void {
  */
 export function getStorageItem<T>(key: string, defaultValue: T): T {
   try {
+    if (typeof window === 'undefined') return defaultValue;
     const item = localStorage.getItem(key);
     return item ? (item as unknown as T) : defaultValue;
   } catch (error) {
@@ -55,6 +58,7 @@ export function getStorageItem<T>(key: string, defaultValue: T): T {
  */
 export function setStorageItem<T>(key: string, value: T): void {
   try {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(key, String(value));
   } catch (error) {
     console.error('Error writing to localStorage:', error);
@@ -82,6 +86,7 @@ export function isValidStorageValue<T extends Record<string, any>>(
  */
 export function getStorageJson<T>(key: string, defaultValue: T): T {
   try {
+    if (typeof window === 'undefined') return defaultValue;
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
@@ -97,6 +102,7 @@ export function getStorageJson<T>(key: string, defaultValue: T): T {
  */
 export function setStorageJson<T>(key: string, value: T): void {
   try {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     console.error('Error writing JSON to localStorage:', error);
@@ -111,6 +117,7 @@ export function setStorageJson<T>(key: string, value: T): void {
  */
 export function getSessionJson<T>(key: string, defaultValue: T): T {
   try {
+    if (typeof window === 'undefined') return defaultValue;
     const item = sessionStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
@@ -126,6 +133,7 @@ export function getSessionJson<T>(key: string, defaultValue: T): T {
  */
 export function setSessionJson<T>(key: string, value: T): void {
   try {
+    if (typeof window === 'undefined') return;
     sessionStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     console.error('Error writing JSON to sessionStorage:', error);
