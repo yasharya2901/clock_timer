@@ -6,6 +6,7 @@ import { getStorageItem, setStorageItem, isValidStorageValue, getSessionJson, se
 import { updateDocumentTitle } from '../utils/documentUtils';
 import { isPipSupported as checkPipSupport, openPipWindow, updatePipTime, updatePipContent } from '../utils/pipUtils';
 import { initializeSounds, SOUND_OPTIONS, isValidSound } from '../utils/soundManager';
+import { requestWakeLock, releaseWakeLock, handleVisibilityChange } from '../utils/wakeLockUtils';
 
 type Theme = 'green' | 'yellow' | 'blue' | 'purple' | 'red';
 
@@ -34,6 +35,7 @@ export default function Timer() {
   const [isPipActive, setIsPipActive] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [timerOnlyMode, setTimerOnlyMode] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settings, setSettings] = useState<TimerSettings>({
     countdownSound: '5',
@@ -149,6 +151,40 @@ export default function Timer() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [timerOnlyMode]);
+
+  // Track fullscreen state
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Manage wake lock based on focus mode, fullscreen, or PIP
+  useEffect(() => {
+    const shouldKeepAwake = timerOnlyMode || isFullscreen || isPipActive;
+
+    if (shouldKeepAwake) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    // Re-request wake lock on visibility change (when tab becomes visible again)
+    const handleVisibility = () => {
+      if (shouldKeepAwake) {
+        handleVisibilityChange();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      // Release wake lock when component unmounts
+      releaseWakeLock();
+    };
+  }, [timerOnlyMode, isFullscreen, isPipActive]);
 
   // Update document title dynamically
   useEffect(() => {
