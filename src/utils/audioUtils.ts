@@ -9,7 +9,10 @@ import { getSound } from './soundManager';
  */
 function playSynthesizedSound(frequency: number, duration: number, volume: number): void {
   try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const Ctor =
+      window.AudioContext ||
+      (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const audioContext = new Ctor();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     

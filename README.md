@@ -4,6 +4,8 @@ A production-ready, SEO-optimized online countdown timer built with Astro and Re
 
 ## 🚀 Quick Start
 
+Requires Node 22.12.0 or newer (see `.nvmrc`).
+
 ```bash
 # Clone the repository
 git clone <your-repo-url>
@@ -90,7 +92,7 @@ clock_timer/
 │   │   ├── storageUtils.ts      # localStorage/sessionStorage helpers
 │   │   └── timeUtils.ts         # Time formatting & validation
 │   └── styles/
-│       └── global.css           # Global Tailwind styles
+│       └── global.css           # Tailwind import, @theme tokens, preflight compat
 ├── public/
 │   ├── robots.txt               # SEO crawler directives
 │   ├── site.webmanifest        # PWA manifest
@@ -100,7 +102,8 @@ clock_timer/
 │   ├── QUICKSTART.md
 │   └── SEO-GUIDE.md
 ├── astro.config.mjs             # Astro configuration
-├── tailwind.config.mjs          # Tailwind CSS configuration
+├── eslint.config.js             # ESLint flat config
+├── .prettierrc                  # Prettier configuration
 ├── tsconfig.json                # TypeScript configuration
 └── package.json                 # Dependencies & scripts
 ```
@@ -536,17 +539,17 @@ const toggleFullscreen = () => {
 ## 🛠️ Technology Stack
 
 ### Core Frameworks
-- **Astro 5.17.1**: Static site generation with partial hydration
-- **React 18.3.1**: UI component library for interactive timer
-- **TypeScript 5.6.2**: Type-safe development
+- **Astro 7.3.1**: Static site generation with partial hydration
+- **React 19.2.8**: UI component library for interactive timer
+- **TypeScript 6.0.3**: Type-safe development (pinned, see Dependency Notes)
 
 ### Styling
-- **Tailwind CSS 3.4.1**: Utility-first CSS framework
+- **Tailwind CSS 4.3.3**: Utility-first CSS framework, configured in CSS
 - **Custom Fonts**: JetBrains Mono (timer), Space Mono (UI)
 
 ### Build Tools & Integrations
 - **@astrojs/react**: React integration for Astro
-- **@astrojs/tailwind**: Tailwind CSS integration
+- **@tailwindcss/vite**: Tailwind CSS Vite plugin
 - **@astrojs/sitemap**: Automatic sitemap generation
 - **@vercel/analytics**: Web analytics (optional)
 
@@ -565,11 +568,12 @@ const toggleFullscreen = () => {
 
 ### Changing Colors
 
-Edit [tailwind.config.mjs](tailwind.config.mjs):
-```javascript
-colors: {
-  'bg-black': '#0a0a0a',      // Background
-  'cream': '#f5f1e3',         // Text color
+Tailwind 4 is configured in CSS. Edit the `@theme` block in
+[src/styles/global.css](src/styles/global.css):
+```css
+@theme {
+  --color-bg-black: #0a0a0a;  /* Background */
+  --color-cream: #f5f1e3;     /* Text color */
 }
 ```
 
@@ -652,7 +656,41 @@ npm run build
 ```
 
 ### Environment Variables
-None required! This is a fully static site with no backend dependencies.
+None required. This is a fully static site with no backend dependencies.
+
+---
+
+## 📌 Dependency Notes
+
+Three version constraints are deliberate. Check here before bumping them.
+
+**TypeScript is pinned to `6.0.3`, not `^6.0.3` and not 7.x.** Two independent
+ceilings apply. `@astrojs/check` declares `typescript: "^5.0.0 || ^6.0.0"`
+because TypeScript 7 dropped the stable programmatic API that Volar needs for
+`.astro` template checking. `typescript-eslint` declares
+`typescript: ">=4.8.4 <6.1.0"`. Since `npm run build` runs `astro check` first,
+a TypeScript bump breaks the build rather than failing quietly. Upstream
+tracking: withastro/roadmap discussion 1321.
+
+**`@vitejs/plugin-react` is pinned via `overrides` to `^6.1.1`.**
+`@astrojs/react@6.0.5` still resolves `@vitejs/plugin-react@5.x`, which calls
+Vite's `transformWithEsbuild`. Vite 8 made esbuild an optional peer, so the 5.x
+plugin fails the build with `Cannot find package 'esbuild'`. Version 6.x is the
+Vite 8 native build. Drop the override once `@astrojs/react` ships a release
+that depends on it directly.
+
+**`vite` is a direct devDependency at `^8.2.2`.** Without it npm hoists an
+older Vite to the project root, and `@tailwindcss/vite` resolves that copy
+instead of the one Astro runs, failing with
+`M.createIdResolver is not a function`. The explicit dependency keeps the whole
+tree on one Vite 8.
+
+**Tailwind 4 preflight compatibility.** Tailwind 4 changed two base defaults
+this UI depends on: placeholders render as the current text colour at 50%
+opacity, and buttons get `cursor: default`. Both are restored in the
+`@layer base` block in [src/styles/global.css](src/styles/global.css). Removing
+that block turns the HH/MM/SS placeholder hints cream and drops the pointer
+cursor from nine buttons.
 
 ---
 

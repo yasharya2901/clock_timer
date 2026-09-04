@@ -539,7 +539,7 @@ export default function Timer() {
                       setTheme(t);
                       setShowThemeMenu(false);
                     }}
-                    className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition-colors duration-200 font-mono text-sm"
+                    className="w-full text-left px-4 py-2 rounded-sm hover:bg-gray-800 transition-colors duration-200 font-mono text-sm"
                     style={{ color: themes[t].primary }}
                   >
                     {themes[t].name}
@@ -714,7 +714,7 @@ export default function Timer() {
                   placeholder="HH"
                   min="0"
                   max="99"
-                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   style={{ borderColor: focusedField === 'hours' ? displayTheme.primary : '#374151', transition: 'border-color 1s ease-in-out' }}
                 />
                 <div className="font-mono text-xs md:text-sm text-cream mt-1">Hours</div>
@@ -729,7 +729,7 @@ export default function Timer() {
                   placeholder="MM"
                   min="0"
                   max="59"
-                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   style={{ borderColor: focusedField === 'minutes' ? displayTheme.primary : '#374151', transition: 'border-color 1s ease-in-out' }}
                 />
                 <div className="font-mono text-xs md:text-sm text-cream mt-1">Minutes</div>
@@ -744,7 +744,7 @@ export default function Timer() {
                   placeholder="SS"
                   min="0"
                   max="59"
-                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-[80px] md:w-[120px] bg-gray-800 text-cream text-center font-jet text-3xl md:text-5xl font-bold rounded-lg px-2 py-3 border-2 focus:outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   style={{ borderColor: focusedField === 'seconds' ? displayTheme.primary : '#374151', transition: 'border-color 1s ease-in-out' }}
                 />
                 <div className="font-mono text-xs md:text-sm text-cream mt-1">Seconds</div>
@@ -832,7 +832,7 @@ export default function Timer() {
       {/* Settings Modal */}
       {showSettingsModal && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4"
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
           onClick={() => setShowSettingsModal(false)}
         >
           <div 
@@ -864,7 +864,7 @@ export default function Timer() {
                   <select
                     value={settings.countdownSound}
                     onChange={(e) => handleCountdownSoundChange(e.target.value)}
-                    className="w-full bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-none font-mono cursor-pointer"
+                    className="w-full bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-hidden font-mono cursor-pointer"
                     style={{ 
                       borderColor: displayTheme.primary,
                       transition: 'border-color 1s ease-in-out'
@@ -886,7 +886,7 @@ export default function Timer() {
                       placeholder="Enter seconds"
                       min="1"
                       autoFocus
-                      className="flex-1 bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="flex-1 bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-hidden font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       style={{ 
                         borderColor: displayTheme.primary,
                         transition: 'border-color 1s ease-in-out'
@@ -926,7 +926,7 @@ export default function Timer() {
                 <select
                   value={settings.timerSound}
                   onChange={(e) => setSettings(prev => ({ ...prev, timerSound: e.target.value }))}
-                  className="w-full bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-none font-mono cursor-pointer"
+                  className="w-full bg-gray-800 text-cream px-4 py-3 rounded-lg border-2 focus:outline-hidden font-mono cursor-pointer"
                   style={{ 
                     borderColor: displayTheme.primary,
                     transition: 'border-color 1s ease-in-out'

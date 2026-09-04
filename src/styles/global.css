@@ -1,3 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Design tokens. Ported from the v3 JS config; `bg-black` keeps its name so
+   existing `bg-bg-black` utilities resolve unchanged. */
+@theme {
+  --color-bg-black: #0a0a0a;
+  --color-cream: #f5f1e3;
+
+  --font-mono: 'Space Mono', monospace;
+  --font-jet: 'JetBrains Mono', monospace;
+}
+
+/* Tailwind v4 preflight changed two defaults that this UI relies on.
+   https://tailwindcss.com/docs/upgrade-guide#preflight-changes */
+@layer base {
+  /* v4 renders placeholders as the current text colour at 50% opacity, which
+     turns the HH/MM/SS hints cream. The timer expects the v3 grey. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  /* v4 gives buttons `cursor: default`. Nine buttons here set no cursor of
+     their own, including Save, Cancel and the theme menu entries. */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}

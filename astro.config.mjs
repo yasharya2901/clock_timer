@@ -1,11 +1,11 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
+import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [react(), tailwind({ applyBaseStyles: false }), sitemap()],
+  integrations: [react(), sitemap()],
   
   // Your production site URL
   site: 'https://clocktimer.in',
@@ -27,15 +27,14 @@ export default defineConfig({
   
   // SEO-friendly settings
   vite: {
+    plugins: [tailwindcss()],
+
     build: {
       // CSS code splitting
       cssCodeSplit: true,
-      
+
       // Generate sourcemaps for debugging
       sourcemap: false,
-      
-      // Minification (using default esbuild)
-      minify: 'esbuild',
     },
     
     // CSS preprocessing
