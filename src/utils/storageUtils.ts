@@ -71,7 +71,7 @@ export function setStorageItem<T>(key: string, value: T): void {
  * @param allowedValues - Object containing allowed values
  * @returns True if value is valid
  */
-export function isValidStorageValue<T extends Record<string, any>>(
+export function isValidStorageValue<T extends Record<string, unknown>>(
   value: string | null,
   allowedValues: T
 ): boolean {

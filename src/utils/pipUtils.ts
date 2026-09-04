@@ -1,6 +1,19 @@
 // Picture-in-Picture utilities
 
 /**
+ * Minimal contract for the Document Picture-in-Picture API, which is not yet
+ * part of TypeScript's DOM lib. Chrome and Edge 116+ expose it on `window`.
+ * Spec: https://wicg.github.io/document-picture-in-picture/
+ */
+interface DocumentPictureInPicture {
+  requestWindow(options?: { width?: number; height?: number }): Promise<Window>;
+}
+
+type WindowWithPip = Window & {
+  documentPictureInPicture?: DocumentPictureInPicture;
+};
+
+/**
  * Checks if Document Picture-in-Picture API is supported
  * @returns True if PiP is supported
  */
@@ -86,11 +99,11 @@ export function copyStylesToPip(pipWindow: Window): void {
       const style = pipWindow.document.createElement('style');
       style.textContent = cssRules;
       pipWindow.document.head.appendChild(style);
-    } catch (e) {
+    } catch {
       // Cross-origin stylesheets will throw, add link instead
       const link = pipWindow.document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = (styleSheet as any).href;
+      link.href = styleSheet.href ?? '';
       pipWindow.document.head.appendChild(link);
     }
   });
@@ -157,7 +170,12 @@ export async function openPipWindow(
   width: number = 400,
   height: number = 200
 ): Promise<Window> {
-  const pipWindow = await (window as any).documentPictureInPicture.requestWindow({
+  const pip = (window as WindowWithPip).documentPictureInPicture;
+  if (!pip) {
+    throw new Error('Document Picture-in-Picture is not supported in this browser');
+  }
+
+  const pipWindow = await pip.requestWindow({
     width,
     height,
   });

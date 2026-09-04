@@ -7,6 +7,28 @@ const siteUrl = 'https://clocktimer.in';
 const title = 'Online Timer - Free Countdown Timer | ClockTimer.in';
 const description = 'Free online timer and countdown clock. Perfect for productivity, cooking, workouts, and time management. Simple, accurate, and works in your browser.';
 const keywords = 'online timer, countdown timer, stopwatch, clock timer, free timer, productivity timer, cooking timer, workout timer, pomodoro timer';
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'ClockTimer.in',
+  url: siteUrl,
+  description,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  featureList: [
+    'Online countdown timer',
+    'Customizable time intervals',
+    'Repeat functionality',
+    'Fullscreen mode',
+    'Browser-based, no installation required',
+  ],
+};
 ---
 
 <!DOCTYPE html>
@@ -45,29 +67,7 @@ const keywords = 'online timer, countdown timer, stopwatch, clock timer, free ti
   <meta name="theme-color" content="#22c55e">
   
   <!-- Structured Data -->
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "ClockTimer.in",
-      "url": "${siteUrl}",
-      "description": "${description}",
-      "applicationCategory": "UtilitiesApplication",
-      "operatingSystem": "Any",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "featureList": [
-        "Online countdown timer",
-        "Customizable time intervals",
-        "Repeat functionality",
-        "Fullscreen mode",
-        "Browser-based, no installation required"
-      ]
-    }
-  </script>
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(structuredData)} />
   
   <!-- Preload Critical Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
